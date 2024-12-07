@@ -13,5 +13,6 @@ cmake_install.cmake
 compile_commands.json
 .vscode/
 .idea/
+_deps/
 *.gcno
 *.gcda
