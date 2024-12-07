@@ -1,0 +1,17 @@
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+.vscode/
+.idea/
+*.gcno
+*.gcda
