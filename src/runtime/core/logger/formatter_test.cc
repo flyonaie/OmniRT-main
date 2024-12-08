@@ -8,14 +8,19 @@ namespace aimrt::runtime::core::logger {
 
 // Test the GetRemappedFuncName function
 TEST(FORMATTER_TEST, Format_test) {
-  auto date = std::chrono::year(2024) / std::chrono::month(10) / std::chrono::day(1);
-  auto time = std::chrono::hours(10) +
-              std::chrono::minutes(10) +
-              std::chrono::seconds(10) +
-              std::chrono::microseconds(123456);
-
-  // // 2024-10-01 10:10:10.123456
-  auto datatime = std::chrono::sys_days(date) + time - std::chrono::seconds(common::util::GetLocalTimeZone());
+  auto now = std::chrono::system_clock::now();
+  auto time_t = std::chrono::system_clock::to_time_t(now);
+  auto tm = std::localtime(&time_t);
+  
+  tm->tm_year = 2024 - 1900;  // year - 1900
+  tm->tm_mon = 9;             // month (0-11)
+  tm->tm_mday = 1;           // day of month
+  tm->tm_hour = 10;
+  tm->tm_min = 10;
+  tm->tm_sec = 10;
+  
+  auto datatime = std::chrono::system_clock::from_time_t(std::mktime(tm));
+  datatime += std::chrono::microseconds(123456);
 
   const char* test_msg = "test log message";
   LogDataWrapper log_data_wrapper{

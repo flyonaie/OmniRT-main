@@ -201,7 +201,7 @@ void ConsoleLoggerBackend::Log(const LogDataWrapper& log_data_wrapper) noexcept 
 bool ConsoleLoggerBackend::CheckLog(const LogDataWrapper& log_data_wrapper) {
   {
     std::shared_lock lock(module_filter_map_mutex_);
-    auto find_itr = module_filter_map_.find(log_data_wrapper.module_name);
+    auto find_itr = module_filter_map_.find(std::string(log_data_wrapper.module_name));
     if (find_itr != module_filter_map_.end()) {
       return find_itr->second;
     }

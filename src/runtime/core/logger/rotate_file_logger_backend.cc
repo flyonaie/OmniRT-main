@@ -202,7 +202,7 @@ uint32_t RotateFileLoggerBackend::GetNextIndex() {
 bool RotateFileLoggerBackend::CheckLog(const LogDataWrapper& log_data_wrapper) {
   {
     std::shared_lock lock(module_filter_map_mutex_);
-    auto find_itr = module_filter_map_.find(log_data_wrapper.module_name);
+    auto find_itr = module_filter_map_.find(std::string(log_data_wrapper.module_name));
     if (find_itr != module_filter_map_.end()) {
       return find_itr->second;
     }
@@ -223,7 +223,7 @@ bool RotateFileLoggerBackend::CheckLog(const LogDataWrapper& log_data_wrapper) {
   }
 
   std::unique_lock lock(module_filter_map_mutex_);
-  module_filter_map_.emplace(log_data_wrapper.module_name, if_log);
+  module_filter_map_.emplace(std::string(log_data_wrapper.module_name), if_log);
 
   return if_log;
 }
