@@ -1,62 +1,47 @@
 # Copyright (c) 2023, AgiBot Inc.
 # All rights reserved.
 
-set_namespace()
-
 # Get the current folder name
 string(REGEX REPLACE ".*/\(.*\)" "\\1" CUR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Get namespace
 get_namespace(CUR_SUPERIOR_NAMESPACE)
-message(STATUS "core-CUR_SUPERIOR_NAMESPACE: ${CUR_SUPERIOR_NAMESPACE}")
 string(REPLACE "::" "_" CUR_SUPERIOR_NAMESPACE_UNDERLINE ${CUR_SUPERIOR_NAMESPACE})
 
 # Set target name
 set(CUR_TARGET_NAME ${CUR_SUPERIOR_NAMESPACE_UNDERLINE}_${CUR_DIR})
 set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${CUR_DIR})
 
-# Add subdirectories for independent compilation
-add_subdirectory(util)
-add_subdirectory(allocator)
-# add_subdirectory(channel)
-# add_subdirectory(configurator)
-# add_subdirectory(executor)
-# add_subdirectory(logger)
-# add_subdirectory(module)
-# add_subdirectory(parameter)
-# add_subdirectory(plugin)
-# add_subdirectory(rpc)
-
-
-# Set file collection for core directory
-file(GLOB head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-file(GLOB src ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
-file(GLOB test_files ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cc)
+# Set file collection
+file(GLOB_RECURSE head_files
+    ${CMAKE_CURRENT_SOURCE_DIR}/util/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/logger/*.h
+    )
+file(GLOB_RECURSE src 
+    ${CMAKE_CURRENT_SOURCE_DIR}/util/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*.cc
+    # ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/logger/*.cc
+    )
+file(GLOB_RECURSE test_files 
+    ${CMAKE_CURRENT_SOURCE_DIR}/util/*_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*_test.cc
+    # ${CMAKE_CURRENT_SOURCE_DIR}/executor/*_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/logger/*_test.cc
+    )
 list(REMOVE_ITEM src ${test_files})
 
 # Add target
-add_library(${CUR_TARGET_NAME} STATIC)
+add_library(${CUR_TARGET_NAME} SHARED)
 add_library(${CUR_TARGET_ALIAS_NAME} ALIAS ${CUR_TARGET_NAME})
 
 # Set source file of target
-target_sources(${CUR_TARGET_NAME} 
-    PRIVATE ${src}
-    PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_util>
-    PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_allocator>
-)
-
-# target_sources(${CUR_TARGET_NAME} 
-#     PRIVATE ${src}
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_allocator>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_channel>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_configurator>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_executor>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_logger>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_module>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_parameter>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_plugin>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_rpc>
-#     PRIVATE $<TARGET_OBJECTS:${CUR_TARGET_NAME}_util>)
+target_sources(${CUR_TARGET_NAME} PRIVATE ${src})
 
 # Set head files of target
 target_sources(${CUR_TARGET_NAME} INTERFACE FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${head_files})
@@ -74,7 +59,10 @@ target_link_libraries(
          asio::asio
          yaml-cpp::yaml-cpp
          TBB::tbb
+         TBB::tbbmalloc
+         TBB::tbbmalloc_proxy
          aimrt::interface::aimrt_module_cpp_interface
+        #  aimrt::interface::aimrt_core_plugin_interface
          aimrt::common::util)
 
 # Add -Werror option

@@ -9,7 +9,7 @@ message(STATUS "get asio ...")
 set(SRC_NAME "asio")
 message(STATUS "get ${SRC_NAME} print ...")
 message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
-set(fmt_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src" CACHE PATH "Path to local ${SRC_NAME} source")
+set(asio_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src" CACHE PATH "Path to local ${SRC_NAME} source")
 
 
 set(asio_DOWNLOAD_URL
@@ -22,6 +22,7 @@ if(asio_LOCAL_SOURCE)
     SOURCE_DIR ${asio_LOCAL_SOURCE}
     OVERRIDE_FIND_PACKAGE)
 else()
+  message(STATUS "downloading asio from ${asio_DOWNLOAD_URL}")
   FetchContent_Declare(
     asio
     URL ${asio_DOWNLOAD_URL}
@@ -31,8 +32,9 @@ endif()
 
 FetchContent_GetProperties(asio)
 if(NOT asio_POPULATED)
+  message(STATUS "fetching asio ...")
   FetchContent_Populate(asio)
-
+  message(STATUS "asio_POPULATED: ${asio_POPULATED}")
   add_library(asio INTERFACE)
   add_library(asio::asio ALIAS asio)
 

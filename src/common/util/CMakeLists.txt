@@ -17,13 +17,15 @@ file(GLOB_RECURSE head_files
     ${CMAKE_CURRENT_SOURCE_DIR}/block_queue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bounded_spsc_lockfree_queue.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/deferred.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/exception.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/format.h
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/deferred.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/exception.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/format.h
+
     ${CMAKE_CURRENT_SOURCE_DIR}/light_signal.h
     ${CMAKE_CURRENT_SOURCE_DIR}/log_util.h
-    #${CMAKE_CURRENT_SOURCE_DIR}/stl_tool.h
-    #${CMAKE_CURRENT_SOURCE_DIR}/string_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/stl_tool.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/string_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/time_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/url_encode.h
     ${CMAKE_CURRENT_SOURCE_DIR}/url_parser.h
@@ -33,13 +35,14 @@ file(GLOB_RECURSE test_files
     ${CMAKE_CURRENT_SOURCE_DIR}/block_queue_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/bounded_spsc_lockfree_queue_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/buffer_util_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/deferred_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/light_signal_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/log_util_test.cc
-    #${CMAKE_CURRENT_SOURCE_DIR}/stl_tool_test.cc
-    #${CMAKE_CURRENT_SOURCE_DIR}/string_util_test.cc
+    # ${CMAKE_CURRENT_SOURCE_DIR}/stl_tool_test.cc
+    # ${CMAKE_CURRENT_SOURCE_DIR}/string_util_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/time_util_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/url_encode_test.cc
-    # ${CMAKE_CURRENT_SOURCE_DIR}/url_parser_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/url_parser_test.cc
     )
 # file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 # file(GLOB_RECURSE test_files ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cc)
@@ -78,5 +81,7 @@ endif()
 
 # Set test of target
 if(AIMRT_BUILD_TESTS AND test_files)
-  add_gtest_target(TEST_TARGET ${CUR_TARGET_NAME} TEST_SRC ${test_files})
+  message("COMMON-UTIL-CUR_TARGET_NAME: ${CUR_TARGET_NAME}")
+  add_gtest_target(TEST_TARGET ${CUR_TARGET_NAME} 
+  TEST_SRC ${test_files})
 endif()

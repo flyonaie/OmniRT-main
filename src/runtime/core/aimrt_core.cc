@@ -78,6 +78,7 @@ void AimRTCore::Initialize(const Options& options) {
   allocator_manager_.Initialize(configurator_manager_.GetAimRTOptionsNode("allocator"));
   EnterState(State::kPostInitAllocator);
 
+#if 0
   // Init rpc
   EnterState(State::kPreInitRpc);
   rpc_manager_.SetLogger(logger_ptr_);
@@ -93,7 +94,7 @@ void AimRTCore::Initialize(const Options& options) {
       std::bind(&AimRTCore::GetExecutor, this, std::placeholders::_1));
   channel_manager_.Initialize(configurator_manager_.GetAimRTOptionsNode("channel"));
   EnterState(State::kPostInitChannel);
-
+#endif
   // Init parameter
   EnterState(State::kPreInitParameter);
   parameter_manager_.SetLogger(logger_ptr_);
@@ -147,6 +148,7 @@ void AimRTCore::StartImpl() {
   allocator_manager_.Start();
   EnterState(State::kPostStartAllocator);
 
+#if 0
   EnterState(State::kPreStartRpc);
   rpc_manager_.Start();
   EnterState(State::kPostStartRpc);
@@ -154,7 +156,7 @@ void AimRTCore::StartImpl() {
   EnterState(State::kPreStartChannel);
   channel_manager_.Start();
   EnterState(State::kPostStartChannel);
-
+#endif
   EnterState(State::kPreStartParameter);
   parameter_manager_.Start();
   EnterState(State::kPostStartParameter);
@@ -179,6 +181,7 @@ void AimRTCore::ShutdownImpl() {
   parameter_manager_.Shutdown();
   EnterState(State::kPostShutdownParameter);
 
+#if 0
   EnterState(State::kPreShutdownChannel);
   channel_manager_.Shutdown();
   EnterState(State::kPostShutdownChannel);
@@ -186,7 +189,7 @@ void AimRTCore::ShutdownImpl() {
   EnterState(State::kPreShutdownRpc);
   rpc_manager_.Shutdown();
   EnterState(State::kPostShutdownRpc);
-
+#endif
   EnterState(State::kPreShutdownAllocator);
   allocator_manager_.Shutdown();
   EnterState(State::kPostShutdownAllocator);
@@ -298,8 +301,10 @@ void AimRTCore::InitCoreProxy(const util::ModuleDetailInfo& info, module::CorePr
   proxy.SetExecutorManager(executor_manager_.GetExecutorManagerProxy(info).NativeHandle());
   proxy.SetLogger(logger_manager_.GetLoggerProxy(info).NativeHandle());
   proxy.SetAllocator(allocator_manager_.GetAllocatorProxy(info).NativeHandle());
+  #if 0
   proxy.SetRpcHandle(rpc_manager_.GetRpcHandleProxy(info).NativeHandle());
   proxy.SetChannelHandle(channel_manager_.GetChannelHandleProxy(info).NativeHandle());
+  #endif
   proxy.SetParameterHandle(parameter_manager_.GetParameterHandleProxy(info).NativeHandle());
 }
 
@@ -325,8 +330,10 @@ std::string AimRTCore::GenInitializationReport() const {
   report.splice(report.end(), executor_manager_.GenInitializationReport());
   report.splice(report.end(), logger_manager_.GenInitializationReport());
   report.splice(report.end(), allocator_manager_.GenInitializationReport());
+  #if 0
   report.splice(report.end(), rpc_manager_.GenInitializationReport());
   report.splice(report.end(), channel_manager_.GenInitializationReport());
+  #endif
   report.splice(report.end(), parameter_manager_.GenInitializationReport());
   report.splice(report.end(), module_manager_.GenInitializationReport());
 

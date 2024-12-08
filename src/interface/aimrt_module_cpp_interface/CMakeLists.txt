@@ -15,9 +15,24 @@ set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${CUR_DIR})
 # Set file collection
 # new code
 file(GLOB head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h)
-file(GLOB_RECURSE test_files ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*_test.cc)
+file(GLOB_RECURSE subdir_head_files 
+  ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/util/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/logger/*.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/parameter/*.h
+  )
+list(APPEND head_files ${subdir_head_files})
 
+file(GLOB_RECURSE test_files 
+  ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*_test.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/util/*_test.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*_test.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/executor/*_test.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/logger/*_test.cc
+  ${CMAKE_CURRENT_SOURCE_DIR}/parameter/*_test.cc
+  )
 
 # old code
 # file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
@@ -38,6 +53,7 @@ target_include_directories(
 # Set head files of target
 target_sources(${CUR_TARGET_NAME} INTERFACE FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${head_files})
 
+message("CUR_TARGET_NAME: ${CUR_TARGET_NAME}")
 # Set link libraries of target
 target_link_libraries(
   ${CUR_TARGET_NAME}
@@ -62,7 +78,13 @@ if(AIMRT_INSTALL)
     DESTINATION include/aimrt/${CUR_DIR})
 endif()
 
+message("CPPINF-UTIL-AIMRT_BUILD_TESTS: ${AIMRT_BUILD_TESTS}")
 # Set test of target
 if(AIMRT_BUILD_TESTS AND test_files)
-  add_gtest_target(TEST_TARGET ${CUR_TARGET_NAME} TEST_SRC ${test_files})
+  message("CPPINF-UTIL-CUR_TARGET_NAME: ${CUR_TARGET_NAME}")
+  add_gtest_target(
+    TEST_TARGET ${CUR_TARGET_NAME}
+    TEST_SRC ${test_files})
 endif()
+
+

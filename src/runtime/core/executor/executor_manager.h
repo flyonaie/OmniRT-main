@@ -7,6 +7,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -99,7 +100,7 @@ class ExecutorManager {
       std::string,
       std::unique_ptr<ExecutorProxy>,
       aimrt::common::util::StringHash,
-      std::equal_to<>>
+      aimrt::common::util::StringEqual>
       executor_proxy_map_;
 
   std::unordered_map<

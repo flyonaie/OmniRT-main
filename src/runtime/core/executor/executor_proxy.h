@@ -65,7 +65,10 @@ class ExecutorProxy {
 class ExecutorManagerProxy {
  public:
   using ExecutorProxyMap = std::unordered_map<
-      std::string, std::unique_ptr<ExecutorProxy>, aimrt::common::util::StringHash, std::equal_to<>>;
+      std::string,
+      std::unique_ptr<ExecutorProxy>,
+      aimrt::common::util::StringHash,
+      aimrt::common::util::StringEqual>;
 
  public:
   explicit ExecutorManagerProxy(const ExecutorProxyMap& executor_proxy_map)
@@ -84,7 +87,7 @@ class ExecutorManagerProxy {
 
  private:
   const aimrt_executor_base_t* GetExecutor(aimrt_string_view_t executor_name) const {
-    auto finditr = executor_proxy_map_.find(aimrt::util::ToStdStringView(executor_name));
+    auto finditr = executor_proxy_map_.find(std::string(aimrt::util::ToStdStringView(executor_name)));
     if (finditr != executor_proxy_map_.end()) return finditr->second->NativeHandle();
 
     AIMRT_WARN("Can not find executor '{}'.", aimrt::util::ToStdStringView(executor_name));

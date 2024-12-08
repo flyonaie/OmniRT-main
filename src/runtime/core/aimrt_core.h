@@ -8,7 +8,9 @@
 #include <vector>
 
 #include "core/allocator/allocator_manager.h"
+#if 0
 #include "core/channel/channel_manager.h"
+#endif
 #include "core/configurator/configurator_manager.h"
 #include "core/executor/executor_manager.h"
 #include "core/executor/guard_thread_executor.h"
@@ -17,7 +19,9 @@
 #include "core/module/module_manager.h"
 #include "core/parameter/parameter_manager.h"
 #include "core/plugin/plugin_manager.h"
+#if 0
 #include "core/rpc/rpc_manager.h"
+#endif
 #include "util/log_util.h"
 
 namespace aimrt::runtime::core {
@@ -161,9 +165,9 @@ class AimRTCore {
 
   State GetState() const { return state_; }
 
-  template <typename... Args>
-    requires std::constructible_from<HookTask, Args...>
-  void RegisterHookFunc(State state, Args&&... args) {
+  template <typename HookTask, typename... Args>
+  typename std::enable_if<std::is_constructible_v<HookTask, Args...>, void>::type
+  RegisterHookFunc(State state, Args&&... args) {
     hook_task_vec_array_[static_cast<uint32_t>(state)]
         .emplace_back(std::forward<Args>(args)...);
   }
@@ -188,13 +192,13 @@ class AimRTCore {
 
   auto& GetAllocatorManager() { return allocator_manager_; }
   const auto& GetAllocatorManager() const { return allocator_manager_; }
-
+#if 0
   auto& GetRpcManager() { return rpc_manager_; }
   const auto& GetRpcManager() const { return rpc_manager_; }
 
   auto& GetChannelManager() { return channel_manager_; }
   const auto& GetChannelManager() const { return channel_manager_; }
-
+#endif
   auto& GetParameterManager() { return parameter_manager_; }
   const auto& GetParameterManager() const { return parameter_manager_; }
 
@@ -233,8 +237,10 @@ class AimRTCore {
   executor::ExecutorManager executor_manager_;
   logger::LoggerManager logger_manager_;
   allocator::AllocatorManager allocator_manager_;
+  #if 0
   rpc::RpcManager rpc_manager_;
   channel::ChannelManager channel_manager_;
+  #endif
   parameter::ParameterManager parameter_manager_;
   module::ModuleManager module_manager_;
 };

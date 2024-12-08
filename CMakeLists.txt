@@ -12,7 +12,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 option(AIMRT_BUILD_TESTS "AimRT build tests." ON)
 option(AIMRT_BUILD_EXAMPLES "AimRT build examples." OFF)
 option(AIMRT_BUILD_DOCUMENT "AimRT build document." OFF)
-option(AIMRT_BUILD_RUNTIME "AimRT build runtime." OFF)
+option(AIMRT_BUILD_RUNTIME "AimRT build runtime." ON)
 option(AIMRT_BUILD_CLI_TOOLS "AimRT build aimrt command line tools." OFF)
 
 option(AIMRT_BUILD_PYTHON_RUNTIME "AimRT build python runtime." OFF)
@@ -77,7 +77,7 @@ if(AIMRT_MASTER_PROJECT)
 
   set(CMAKE_CXX_VISIBILITY_PRESET hidden)
   set(CMAKE_CXX_VISIBLITY_INLINES_HIDDEN ON)
-  set(BUILD_SHARED_LIBS OFF)
+  set(BUILD_SHARED_LIBS ON)
 
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     if(AIMRT_BUILD_TESTS)

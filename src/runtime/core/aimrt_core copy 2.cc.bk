@@ -1,0 +1,164 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+#include "core/aimrt_core.h"
+#include <yaml-cpp/yaml.h>
+#include "core/manager/manager_factory.h"
+#include "util/log_util.h"
+
+namespace aimrt::runtime::core {
+
+// 构造函数：初始化选项和日志记录器
+AimRTCore::AimRTCore(Options options)
+    : options_(std::move(options)),
+      logger_(std::make_shared<common::util::LoggerWrapper>()) {
+}
+
+// 析构函数：确保在对象销毁时停止所有运行中的服务
+AimRTCore::~AimRTCore() {
+  if (running_) {
+    try {
+      Stop();
+    } catch (const std::exception& e) {
+      if (logger_) {
+        AIMRT_ERROR("Error during shutdown: {}", e.what());
+      }
+    }
+  }
+}
+
+// 初始化核心组件：加载配置，创建并初始化所有管理器
+void AimRTCore::Initialize() {
+  if (initialized_) {
+    return;
+  }
+
+  try {
+    LoadConfig();      // 加载配置文件
+    CreateManagers();  // 创建管理器实例
+    InitializeManagers(); // 初始化所有管理器
+    initialized_ = true;
+  } catch (const std::exception& e) {
+    AIMRT_ERROR("Initialization failed: {}", e.what());
+    throw;
+  }
+}
+
+// 从YAML配置文件加载配置信息
+void AimRTCore::LoadConfig() {
+  if (!options_.cfg_file_path.empty()) {
+    try {
+      YAML::Node config = YAML::LoadFile(options_.cfg_file_path);
+      // 遍历所有启用的管理器，加载它们的配置
+      for (const auto& name : options_.enabled_managers) {
+        if (config[name]) {
+          // TODO: 将配置传递给对应的管理器
+        }
+      }
+    } catch (const YAML::Exception& e) {
+      AIMRT_ERROR("Failed to load config file: {}", e.what());
+      throw;
+    }
+  }
+}
+
+// 使用工厂模式创建所有启用的管理器实例
+void AimRTCore::CreateManagers() {
+  auto& factory = ManagerFactory::Instance();
+  
+  for (const auto& name : options_.enabled_managers) {
+    auto manager = factory.CreateManager(name);
+    if (manager) {
+      managers_[name] = manager;
+    } else {
+      AIMRT_WARN("Failed to create manager: {}", name);
+    }
+  }
+}
+
+// 初始化所有已创建的管理器
+void AimRTCore::InitializeManagers() {
+  for (auto& [name, manager] : managers_) {
+    try {
+      manager->Initialize(nullptr);  // TODO: 传递配置
+      if (!manager->IsHealthy()) {
+        throw std::runtime_error(manager->GetError());
+      }
+    } catch (const std::exception& e) {
+      AIMRT_ERROR("Failed to initialize manager {}: {}", name, e.what());
+      throw;
+    }
+  }
+}
+
+// 启动核心服务：确保已初始化并启动所有管理器
+void AimRTCore::Start() {
+  if (!initialized_) {
+    throw std::runtime_error("Core not initialized");
+  }
+
+  if (running_) {
+    return;
+  }
+
+  try {
+    StartManagers();
+    running_ = true;
+  } catch (const std::exception& e) {
+    AIMRT_ERROR("Start failed: {}", e.what());
+    throw;
+  }
+}
+
+// 启动所有管理器
+void AimRTCore::StartManagers() {
+  for (auto& [name, manager] : managers_) {
+    try {
+      manager->Start();
+      if (!manager->IsHealthy()) {
+        throw std::runtime_error(manager->GetError());
+      }
+    } catch (const std::exception& e) {
+      AIMRT_ERROR("Failed to start manager {}: {}", name, e.what());
+      throw;
+    }
+  }
+}
+
+// 停止核心服务：停止所有运行中的管理器
+void AimRTCore::Stop() {
+  if (!running_) {
+    return;
+  }
+
+  try {
+    StopManagers();
+    running_ = false;
+  } catch (const std::exception& e) {
+    AIMRT_ERROR("Stop failed: {}", e.what());
+    throw;
+  }
+}
+
+// 停止所有管理器
+void AimRTCore::StopManagers() {
+  for (auto& [name, manager] : managers_) {
+    try {
+      manager->Stop();
+    } catch (const std::exception& e) {
+      AIMRT_ERROR("Failed to stop manager {}: {}", name, e.what());
+    }
+  }
+}
+
+// 检查所有管理器的健康状态
+bool AimRTCore::IsHealthy() const {
+  for (const auto& [name, manager] : managers_) {
+    if (!manager->IsHealthy()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+}  // namespace aimrt::runtime::core

@@ -16,11 +16,11 @@ set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${CUR_DIR})
 
 # Set file collection
 # new code
-file(GLOB head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h)
+# file(GLOB head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+# file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h)
 
 # old code
-# file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
+file(GLOB_RECURSE head_files ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
 
 # Add target
 add_library(${CUR_TARGET_NAME} INTERFACE)

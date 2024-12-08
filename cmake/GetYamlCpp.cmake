@@ -5,6 +5,12 @@ include(FetchContent)
 
 message(STATUS "get yaml-cpp ...")
 
+# 设置本地源码路径
+set(SRC_NAME "yaml-cpp")
+message(STATUS "get ${SRC_NAME} print ...")
+message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+set(yaml-cpp_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src" CACHE PATH "Path to local ${SRC_NAME} source")
+
 set(yaml-cpp_DOWNLOAD_URL
     "https://github.com/jbeder/yaml-cpp/archive/0.8.0.tar.gz"
     CACHE STRING "")

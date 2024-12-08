@@ -2,6 +2,7 @@
 // All rights reserved.
 
 #include "core/executor/asio_strand_executor.h"
+#include "util/compiler_hints.h"
 
 namespace YAML {
 template <>
@@ -92,7 +93,7 @@ void AsioStrandExecutor::ExecuteAt(
     timer_ptr->expires_at(tp);
     timer_ptr->async_wait([this, timer_ptr,
                            task{std::move(task)}](asio::error_code ec) {
-      if (ec) [[unlikely]] {
+      if (AIMRT_UNLIKELY(ec)) {
         AIMRT_ERROR("Asio strand executor '{}' timer get err, code '{}', msg: {}",
                     Name(), ec.value(), ec.message());
         return;

@@ -41,6 +41,8 @@ struct convert<aimrt::runtime::core::executor::ExecutorManager::Options> {
 
         if (executor_node["options"])
           executor_options.options = executor_node["options"];
+        else
+          executor_options.options = YAML::Node(YAML::NodeType::Null);
 
         rhs.executors_options.emplace_back(std::move(executor_options));
       }
@@ -157,7 +159,7 @@ const ExecutorManagerProxy& ExecutorManager::GetExecutorManagerProxy(
 
 aimrt::executor::ExecutorRef ExecutorManager::GetExecutor(
     std::string_view executor_name) {
-  auto finditr = executor_proxy_map_.find(executor_name);
+  auto finditr = executor_proxy_map_.find(std::string(executor_name));
   if (finditr != executor_proxy_map_.end())
     return aimrt::executor::ExecutorRef(finditr->second->NativeHandle());
 

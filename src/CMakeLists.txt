@@ -4,7 +4,7 @@
 set_root_namespace("aimrt")
 
 add_subdirectory(common)
-# add_subdirectory(interface)
+add_subdirectory(interface)
 
 if(AIMRT_BUILD_RUNTIME)
   add_subdirectory(runtime)

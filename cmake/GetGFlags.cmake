@@ -5,11 +5,29 @@ include(FetchContent)
 
 message(STATUS "get gflags ...")
 
+# 设置本地源码路径
+set(SRC_NAME "gflags")
+message(STATUS "get ${SRC_NAME} print ...")
+message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+
+# 检查本地源码目录是否存在且包含必要文件
+set(LOCAL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src")
+if(EXISTS "${LOCAL_SOURCE_DIR}" AND IS_DIRECTORY "${LOCAL_SOURCE_DIR}"
+   AND EXISTS "${LOCAL_SOURCE_DIR}/CMakeLists.txt"
+   AND EXISTS "${LOCAL_SOURCE_DIR}/src")
+  set(gflags_LOCAL_SOURCE "${LOCAL_SOURCE_DIR}" CACHE PATH "Path to local ${SRC_NAME} source")
+  message(STATUS "Found local ${SRC_NAME} source at: ${gflags_LOCAL_SOURCE}")
+else()
+  set(gflags_LOCAL_SOURCE "" CACHE PATH "Path to local ${SRC_NAME} source")
+  message(STATUS "Local ${SRC_NAME} source not found or incomplete, will download from remote")
+endif()
+
 set(gflags_DOWNLOAD_URL
     "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz"
     CACHE STRING "")
 
 if(gflags_LOCAL_SOURCE)
+  message(STATUS "using local gflags source: ${gflags_LOCAL_SOURCE}")
   FetchContent_Declare(
     gflags
     SOURCE_DIR ${gflags_LOCAL_SOURCE}
@@ -25,14 +43,21 @@ endif()
 FetchContent_GetProperties(gflags)
 if(NOT gflags_POPULATED)
   FetchContent_Populate(gflags)
-
+  
   set(BUILD_TESTING
       OFF
       CACHE BOOL "")
 
+  # 创建临时CMake策略文件
+  file(WRITE "${gflags_SOURCE_DIR}/cmake_policies.cmake"
+       "if(POLICY CMP0063)\n  cmake_policy(SET CMP0063 OLD)\nendif()\n")
+
+  # 读取原始CMakeLists.txt
   file(READ ${gflags_SOURCE_DIR}/CMakeLists.txt TMP_VAR)
-  string(REPLACE "  set (PKGCONFIG_INSTALL_DIR " "# set (PKGCONFIG_INSTALL_DIR " TMP_VAR "${TMP_VAR}")
-  file(WRITE ${gflags_SOURCE_DIR}/CMakeLists.txt "${TMP_VAR}")
+  
+  # 在文件开头添加include语句
+  file(WRITE ${gflags_SOURCE_DIR}/CMakeLists.txt 
+       "include(${gflags_SOURCE_DIR}/cmake_policies.cmake)\n${TMP_VAR}")
 
   add_subdirectory(${gflags_SOURCE_DIR} ${gflags_BINARY_DIR})
 

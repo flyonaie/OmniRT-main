@@ -174,14 +174,12 @@ class ChannelHandleProxy {
   using PublisherProxyMap = std::unordered_map<
       std::string,
       std::unique_ptr<PublisherProxy>,
-      aimrt::common::util::StringHash,
-      std::equal_to<>>;
+      aimrt::common::util::StringHash>;  // Use StringHash for heterogeneous lookup
 
   using SubscriberProxyMap = std::unordered_map<
       std::string,
       std::unique_ptr<SubscriberProxy>,
-      aimrt::common::util::StringHash,
-      std::equal_to<>>;
+      aimrt::common::util::StringHash>;  // Use StringHash for heterogeneous lookup
 
   ChannelHandleProxy(std::string_view pkg_path,
                      std::string_view module_name,
@@ -213,7 +211,6 @@ class ChannelHandleProxy {
  private:
   const aimrt_channel_publisher_base_t* GetPublisher(aimrt_string_view_t input_topic) {
     auto topic = aimrt::util::ToStdStringView(input_topic);
-
     auto find_itr = publisher_proxy_map_.find(topic);
     if (find_itr != publisher_proxy_map_.end()) {
       return find_itr->second->NativeHandle();
@@ -225,7 +222,7 @@ class ChannelHandleProxy {
     }
 
     auto emplace_ret = publisher_proxy_map_.emplace(
-        topic,
+        std::string(topic),
         std::make_unique<PublisherProxy>(
             pkg_path_,
             module_name_,
@@ -239,7 +236,6 @@ class ChannelHandleProxy {
 
   const aimrt_channel_subscriber_base_t* GetSubscriber(aimrt_string_view_t input_topic) {
     auto topic = aimrt::util::ToStdStringView(input_topic);
-
     auto find_itr = subscriber_proxy_map_.find(topic);
     if (find_itr != subscriber_proxy_map_.end()) {
       return find_itr->second->NativeHandle();
@@ -251,7 +247,7 @@ class ChannelHandleProxy {
     }
 
     auto emplace_ret = subscriber_proxy_map_.emplace(
-        topic,
+        std::string(topic),
         std::make_unique<SubscriberProxy>(
             pkg_path_,
             module_name_,

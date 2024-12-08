@@ -9,7 +9,7 @@ message(STATUS "get TBB ...")
 set(SRC_NAME "tbb")
 message(STATUS "get ${SRC_NAME} print ...")
 message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
-set(fmt_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src" CACHE PATH "Path to local ${SRC_NAME} source")
+set(tbb_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src" CACHE PATH "Path to local ${SRC_NAME} source")
 
 
 set(tbb_DOWNLOAD_URL
@@ -33,7 +33,19 @@ FetchContent_GetProperties(tbb)
 if(NOT tbb_POPULATED)
   set(TBB_TEST
       OFF
-      CACHE BOOL "")
+      CACHE BOOL "" FORCE)
+
+  set(TBB_EXAMPLES
+      OFF
+      CACHE BOOL "" FORCE)
+
+  set(BUILD_SHARED_LIBS
+      ON
+      CACHE BOOL "" FORCE)
+
+  set(TBB_PREFER_STATIC_LIBS
+      OFF
+      CACHE BOOL "" FORCE)
 
   set(TBB_DIR
       ""

@@ -17,9 +17,6 @@ namespace aimrt::common::util {
  */
 template <class StringType = std::string>
 struct Url {
-  static_assert(std::is_same<StringType, std::string>::value,
-                "StringType must be std::string");
- 
   StringType protocol;  // 协议
   StringType host;      // host
   StringType service;   // 端口

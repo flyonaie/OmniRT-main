@@ -108,36 +108,41 @@ class BufferOperator {
   BufferOperator &operator=(const BufferOperator &) = delete;
 
   void SetUint8(uint8_t n) {
-    if (cur_ + sizeof(n) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(n) > end_) {
       throw std::runtime_error("Out of bounds when 'SetUint8'.");
+    }
     *cur_ = n;
     cur_ += sizeof(n);
   }
 
   void SetUint16(uint16_t n) {
-    if (cur_ + sizeof(n) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(n) > end_) {
       throw std::runtime_error("Out of bounds when 'SetUint16'.");
+    }
     SetBufFromUint16(cur_, n);
     cur_ += sizeof(n);
   }
 
   void SetUint32(uint32_t n) {
-    if (cur_ + sizeof(n) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(n) > end_) {
       throw std::runtime_error("Out of bounds when 'SetUint32'.");
+    }
     SetBufFromUint32(cur_, n);
     cur_ += sizeof(n);
   }
 
   void SetUint64(uint64_t n) {
-    if (cur_ + sizeof(n) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(n) > end_) {
       throw std::runtime_error("Out of bounds when 'SetUint64'.");
+    }
     SetBufFromUint64(cur_, n);
     cur_ += sizeof(n);
   }
 
   void SetBuffer(const char *data, size_t len) {
-    if (cur_ + len > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + len > end_) {
       throw std::runtime_error("Out of bounds when 'SetBuffer'.");
+    }
 
     memcpy(cur_, data, len);
     cur_ += len;
@@ -150,30 +155,31 @@ class BufferOperator {
   void SetString(std::string_view s, BufferLenType len_type = BufferLenType::kUInt64) {
     size_t str_len = s.size();
 
-    if (cur_ + static_cast<size_t>(len_type) + str_len > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + static_cast<size_t>(len_type) + str_len > end_) {
       throw std::runtime_error("Out of bounds when 'SetString'.");
+    }
 
     switch (len_type) {
       case BufferLenType::kUInt8:
-        if (str_len > std::numeric_limits<uint8_t>::max()) [[unlikely]] {
+        [[unlikely]] if (str_len > std::numeric_limits<uint8_t>::max()) {
           throw std::runtime_error("String length out of range.");
         }
         SetUint8(static_cast<uint8_t>(str_len));
         break;
       case BufferLenType::kUInt16:
-        if (str_len > std::numeric_limits<uint16_t>::max()) [[unlikely]] {
+        [[unlikely]] if (str_len > std::numeric_limits<uint16_t>::max()) {
           throw std::runtime_error("String length out of range.");
         }
         SetUint16(static_cast<uint16_t>(str_len));
         break;
       case BufferLenType::kUInt32:
-        if (str_len > std::numeric_limits<uint32_t>::max()) [[unlikely]] {
+        [[unlikely]] if (str_len > std::numeric_limits<uint32_t>::max()) {
           throw std::runtime_error("String length out of range.");
         }
         SetUint32(static_cast<uint32_t>(str_len));
         break;
       case BufferLenType::kUInt64:
-        if (str_len > std::numeric_limits<uint64_t>::max()) [[unlikely]] {
+        [[unlikely]] if (str_len > std::numeric_limits<uint64_t>::max()) {
           throw std::runtime_error("String length out of range.");
         }
         SetUint64(static_cast<uint64_t>(str_len));
@@ -207,48 +213,54 @@ class ConstBufferOperator {
   ConstBufferOperator &operator=(const ConstBufferOperator &) = delete;
 
   uint8_t GetUint8() {
-    if (cur_ + sizeof(uint8_t) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(uint8_t) > end_) {
       throw std::runtime_error("Out of bounds when 'GetUint8'.");
+    }
     uint8_t n = *cur_;
     cur_ += sizeof(uint8_t);
     return n;
   }
 
   uint16_t GetUint16() {
-    if (cur_ + sizeof(uint16_t) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(uint16_t) > end_) {
       throw std::runtime_error("Out of bounds when 'GetUint16'.");
+    }
     uint16_t n = GetUint16FromBuf(cur_);
     cur_ += sizeof(uint16_t);
     return n;
   }
 
   uint32_t GetUint32() {
-    if (cur_ + sizeof(uint32_t) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(uint32_t) > end_) {
       throw std::runtime_error("Out of bounds when 'GetUint32'.");
+    }
     uint32_t n = GetUint32FromBuf(cur_);
     cur_ += sizeof(uint32_t);
     return n;
   }
 
   uint64_t GetUint64() {
-    if (cur_ + sizeof(uint64_t) > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + sizeof(uint64_t) > end_) {
       throw std::runtime_error("Out of bounds when 'GetUint64'.");
+    }
     uint64_t n = GetUint64FromBuf(cur_);
     cur_ += sizeof(uint64_t);
     return n;
   }
 
   const char* GetBuffer(size_t len) {
-    if (cur_ + len > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + len > end_) {
       throw std::runtime_error("Out of bounds when 'GetBuffer'.");
+    }
     const char* buffer = cur_;
     cur_ += len;
     return buffer;
   }
 
   void GetBuffer(char *dst, size_t len) {
-    if (cur_ + len > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + len > end_) {
       throw std::runtime_error("Out of bounds when 'GetBuffer'.");
+    }
     memcpy(dst, cur_, len);
     cur_ += len;
   }
@@ -272,8 +284,9 @@ class ConstBufferOperator {
         throw std::runtime_error("Invalid buffer len type.");
     }
 
-    if (cur_ + str_len > end_) [[unlikely]]
+    [[unlikely]] if (cur_ + str_len > end_) {
       throw std::runtime_error("Out of bounds when 'GetString'.");
+    }
 
     std::string_view s = std::string_view(cur_, str_len);
     cur_ += str_len;

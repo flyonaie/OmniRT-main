@@ -13,6 +13,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace aimrt::common::util {
@@ -50,44 +51,74 @@ inline std::string_view& Trim(std::string_view& s) {
  * @param[in] clear 是否去除key为空的情况
  * @return std::map<std::string, std::string> 解析后的map
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
-inline std::map<StringType, StringType> SplitToMap(std::string_view source,
-                                                   std::string_view vsep = "&",
-                                                   std::string_view msep = "=",
-                                                   bool trim = true,
-                                                   bool clear = true) {
-  std::map<StringType, StringType> result;
+template <typename StringType>
+inline auto to_string_type(std::string_view sv) {
+  if constexpr (std::is_same_v<StringType, std::string_view>) {
+    return sv;
+  } else if constexpr (std::is_same_v<StringType, std::string>) {
+    return std::string(sv);
+  } else {
+    static_assert(std::is_same_v<StringType, const char*>, "Unsupported string type");
+    return sv.data();
+  }
+}
 
-  if (source.empty() || vsep.empty() || msep.empty() || vsep == msep)
-    return result;
-  size_t v_pos_end = 0, v_pos_start = 0;
-  do {
-    v_pos_end = source.find(vsep, v_pos_start);
-    if (v_pos_end == std::string_view::npos) v_pos_end = source.length();
-    if (v_pos_end > v_pos_start) {
-      auto kv_str = source.substr(v_pos_start, v_pos_end - v_pos_start);
-      size_t msep_pos = kv_str.find(msep);
-      if (msep_pos != std::string_view::npos) {
-        auto first = kv_str.substr(0, msep_pos);
-        auto second = kv_str.substr(msep_pos + msep.size());
+template <typename StringType>
+using EnableIfStringType = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType<StringType>>
+std::map<StringType, StringType> SplitToMap(std::string_view source,
+                                           std::string_view vsep = "&",
+                                           std::string_view msep = "=",
+                                           bool trim = true,
+                                           bool clear = true) {
+  std::map<StringType, StringType> kvmap;
+  if (source.empty()) return kvmap;
+
+  size_t pos = 0;
+  size_t next_pos = source.find(vsep);
+  while (next_pos != std::string_view::npos) {
+    auto kv = source.substr(pos, next_pos - pos);
+    if (!kv.empty()) {
+      auto sep_pos = kv.find(msep);
+      if (sep_pos != std::string_view::npos) {
+        auto key = kv.substr(0, sep_pos);
+        auto val = kv.substr(sep_pos + msep.size());
         if (trim) {
-          Trim(first);
-          if (!(clear && first.empty())) {
-            result[StringType(first)] = StringType(Trim(second));
-          }
-        } else {
-          if (!(clear && first.empty())) {
-            result[StringType(first)] = StringType(second);
-          }
+          key = Trim(key);
+          val = Trim(val);
+        }
+        if (!clear || !key.empty()) {
+          kvmap[to_string_type<StringType>(key)] = to_string_type<StringType>(val);
         }
       }
     }
-    v_pos_start = v_pos_end + vsep.size();
-  } while (v_pos_end < source.length());
+    pos = next_pos + vsep.size();
+    next_pos = source.find(vsep, pos);
+  }
 
-  return result;
+  if (pos < source.size()) {
+    auto kv = source.substr(pos);
+    if (!kv.empty()) {
+      auto sep_pos = kv.find(msep);
+      if (sep_pos != std::string_view::npos) {
+        auto key = kv.substr(0, sep_pos);
+        auto val = kv.substr(sep_pos + msep.size());
+        if (trim) {
+          key = Trim(key);
+          val = Trim(val);
+        }
+        if (!clear || !key.empty()) {
+          kvmap[to_string_type<StringType>(key)] = to_string_type<StringType>(val);
+        }
+      }
+    }
+  }
+
+  return kvmap;
 }
 
 /**
@@ -98,9 +129,13 @@ inline std::map<StringType, StringType> SplitToMap(std::string_view source,
  * @param[in] msep 单个kv内部的分隔符
  * @return std::string 拼接后的字符串
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType2 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType2<StringType>>
 inline std::string JoinMap(const std::map<StringType, StringType>& kvmap,
                            std::string_view vsep = "&",
                            std::string_view msep = "=") {
@@ -120,9 +155,13 @@ inline std::string JoinMap(const std::map<StringType, StringType>& kvmap,
  * @param[in] defval 默认字符串，当m中没有对应的key时，返回defval
  * @return std::string 结果
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType3 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType3<StringType>>
 inline const StringType& GetMapItemWithDef(const std::map<StringType, StringType>& m,
                                            const StringType& key,
                                            const StringType& defval = "") {
@@ -219,9 +258,13 @@ inline std::string_view GetValueFromStrKV(std::string_view str,
  * @param[in] clear 是否去除空项
  * @return std::vector<std::string> 分割结果
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType4 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType4<StringType>>
 inline std::vector<StringType> SplitToVec(std::string_view source,
                                           std::string_view sep,
                                           bool trim = true,
@@ -253,9 +296,13 @@ inline std::vector<StringType> SplitToVec(std::string_view source,
  * @param[in] sep 分隔符
  * @return std::string 拼接后的字符串
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType5 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType5<StringType>>
 inline std::string JoinVec(const std::vector<StringType>& vec, std::string_view sep) {
   std::string result;
   for (auto itr = vec.begin(); itr != vec.end(); ++itr) {
@@ -274,9 +321,13 @@ inline std::string JoinVec(const std::vector<StringType>& vec, std::string_view 
  * @param[in] clear 是否去除空项
  * @return std::set<std::string> 分割结果
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType6 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType6<StringType>>
 inline std::set<StringType> SplitToSet(std::string_view source,
                                        std::string_view sep,
                                        bool trim = true,
@@ -308,9 +359,13 @@ inline std::set<StringType> SplitToSet(std::string_view source,
  * @param[in] sep 分隔符
  * @return std::string 拼接后的字符串
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType7 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType7<StringType>>
 inline std::string JoinSet(const std::set<StringType>& st, std::string_view sep) {
   std::string result;
   for (auto itr = st.begin(); itr != st.end(); ++itr) {
@@ -522,9 +577,13 @@ inline std::set<KeyType> GetMapKeys(const std::map<KeyType, ValType>& m) {
  * @param with_header 是否要画表头
  * @return std::string 结果字符串，可以直接打印
  */
-template <class StringType = std::string_view>
-  requires(std::is_same_v<StringType, std::string_view> ||
-           std::is_same_v<StringType, std::string>)
+template <typename StringType>
+using EnableIfStringType8 = std::enable_if_t<
+    std::is_same_v<StringType, std::string_view> ||
+    std::is_same_v<StringType, std::string> ||
+    std::is_same_v<StringType, const char*>, void>;
+
+template <typename StringType, typename = EnableIfStringType8<StringType>>
 inline std::string DrawTable(
     const std::vector<std::vector<StringType>>& table, bool with_header = true) {
   size_t row = table.size();
@@ -815,12 +874,48 @@ inline std::string SSToString(const T& obj) {
 }
 
 struct StringHash {
-  using hash_type = std::hash<std::string_view>;
   using is_transparent = void;
+  using hash_type = std::hash<std::string_view>;
+  std::size_t operator()(const std::string& str) const noexcept {
+    return hash_type{}(std::string_view(str.data(), str.size()));
+  }
+  std::size_t operator()(const char* str) const noexcept {
+    return hash_type{}(std::string_view(str));
+  }
+  std::size_t operator()(std::string_view str) const noexcept {
+    return hash_type{}(str);
+  }
+};
 
-  std::size_t operator()(const char* str) const { return hash_type{}(str); }
-  std::size_t operator()(std::string_view str) const { return hash_type{}(str); }
-  std::size_t operator()(std::string const& str) const { return hash_type{}(str); }
+struct StringEqual {
+  using is_transparent = void;
+  bool operator()(const std::string& lhs, const std::string& rhs) const noexcept {
+    return std::string_view(lhs.data(), lhs.size()) == std::string_view(rhs.data(), rhs.size());
+  }
+  bool operator()(const std::string& lhs, const char* rhs) const noexcept {
+    return std::string_view(lhs.data(), lhs.size()) == std::string_view(rhs);
+  }
+  bool operator()(const char* lhs, const std::string& rhs) const noexcept {
+    return std::string_view(lhs) == std::string_view(rhs.data(), rhs.size());
+  }
+  bool operator()(const std::string& lhs, std::string_view rhs) const noexcept {
+    return std::string_view(lhs.data(), lhs.size()) == rhs;
+  }
+  bool operator()(std::string_view lhs, const std::string& rhs) const noexcept {
+    return lhs == std::string_view(rhs.data(), rhs.size());
+  }
+  bool operator()(const char* lhs, const char* rhs) const noexcept {
+    return std::string_view(lhs) == std::string_view(rhs);
+  }
+  bool operator()(const char* lhs, std::string_view rhs) const noexcept {
+    return std::string_view(lhs) == rhs;
+  }
+  bool operator()(std::string_view lhs, const char* rhs) const noexcept {
+    return lhs == std::string_view(rhs);
+  }
+  bool operator()(std::string_view lhs, std::string_view rhs) const noexcept {
+    return lhs == rhs;
+  }
 };
 
 }  // namespace aimrt::common::util

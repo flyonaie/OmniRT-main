@@ -2,9 +2,6 @@
 // All rights reserved.
 
 #pragma once
-#ifdef CONCEPTS_FEATURE
-#include <concepts>
-#endif
 #include <functional>
 #include <type_traits>
 
@@ -17,8 +14,8 @@ class Deferred {
  public:
   Deferred() = default;
 
-  template <class F>
-    requires(!std::same_as<std::decay_t<F>, Deferred>)  // Avoid hide Deferred(Deferred&&)
+  template <class F,
+            typename = std::enable_if_t<!std::is_same_v<std::decay_t<F>, Deferred>>>
   explicit Deferred(F&& f) : action_(std::forward<F>(f)) {}
 
   Deferred(Deferred&&) noexcept = default;

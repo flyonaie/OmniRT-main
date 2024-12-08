@@ -27,14 +27,15 @@ struct InvokerTraitsHelper<R (*)(void*, Args...)> {
 };
 
 template <typename T>
-concept DecayedType = std::is_same_v<std::decay_t<T>, T>;
+struct IsDecayedType : std::is_same<std::decay_t<T>, T> {};
 
-// TODO: 参数类型也要是退化的（纯C Style，不可有引用、stl容器等）
 template <typename T>
-concept FunctionCStyleOps =
+struct IsFunctionCStyleOps {
+  static constexpr bool value = 
     std::is_same_v<void (*)(void*, void*), decltype(T::relocator)> &&
     std::is_same_v<void (*)(void*), decltype(T::destroyer)> &&
-    DecayedType<typename InvokerTraitsHelper<decltype(T::invoker)>::ReturnType>;
+    IsDecayedType<typename InvokerTraitsHelper<decltype(T::invoker)>::ReturnType>::value;
+};
 
 /*
 TODO:
@@ -48,8 +49,10 @@ TODO:
  *
  * @tparam Ops
  */
-template <FunctionCStyleOps Ops>
-class Function<Ops> {
+template <typename Ops>
+class Function {
+  static_assert(IsFunctionCStyleOps<Ops>::value, "Ops must satisfy FunctionCStyleOps requirements");
+
  public:
   using OpsType = Ops;
   using InvokerType = decltype(OpsType::invoker);
@@ -77,7 +80,7 @@ class Function<Ops> {
   }
 
   Function(aimrt_function_base_t* function_base) {
-    if (function_base == nullptr) [[unlikely]] {
+    [[unlikely]] if (function_base == nullptr) {
       base_.ops = nullptr;
       return;
     }

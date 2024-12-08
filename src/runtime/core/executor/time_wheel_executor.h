@@ -11,6 +11,7 @@
 #include "aimrt_module_cpp_interface/executor/executor.h"
 #include "core/executor/executor_base.h"
 #include "util/log_util.h"
+#include "util/futex_atomic.h"
 
 namespace aimrt::runtime::core::executor {
 
@@ -103,7 +104,7 @@ class TimeWheelExecutor : public ExecutorBase {
   uint64_t dt_count_;
 
   uint64_t start_time_point_ = 0;
-  std::atomic_bool start_flag_ = false;
+  aimrt::common::util::FutexAtomic start_flag_;
 
   mutable std::shared_mutex tick_mutex_;
   uint64_t current_tick_count_ = 0;
