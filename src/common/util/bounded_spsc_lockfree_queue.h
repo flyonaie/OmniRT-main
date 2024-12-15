@@ -1,10 +1,23 @@
 // Copyright (c) 2023 OmniRT Authors. All rights reserved.
 //
-// Bounded single-producer single-consumer lock-free queue implementation.
-// Thread-safe for one producer thread and one consumer thread.
+// 有界单生产者单消费者无锁队列实现
+// 本队列实现专门针对单生产者-单消费者场景进行了优化,具有以下特点:
+// 1. 无锁实现: 通过原子操作和内存序保证线程安全,避免锁开销
+// 2. 有界队列: 预分配固定大小的存储空间,避免动态内存分配
+// 3. SPSC特化: 仅支持单生产者-单消费者模式,但性能最优
+// 4. 缓存友好: 通过字节对齐减少伪共享,提升缓存命中率
+//
+// 使用场景:
+// - 高性能线程间通信,如生产者-消费者模型
+// - 实时系统中的数据传输
+// - 对延迟敏感的应用程序
+//
+// 线程安全说明:
+// - 一个线程可以安全地执行入队操作(生产者)
+// - 一个线程可以安全地执行出队操作(消费者) 
+// - 同一个线程不能同时执行入队和出队操作
 
-#ifndef OMNIRT_COMMON_UTIL_BOUNDED_SPSC_LOCKFREE_QUEUE_H_
-#define OMNIRT_COMMON_UTIL_BOUNDED_SPSC_LOCKFREE_QUEUE_H_
+#pragma once
 
 #include <atomic>
 #include <cstddef>  // for size_t
@@ -15,18 +28,23 @@
 namespace omnirt::common::util {
 
 /**
- * @brief A bounded single-producer single-consumer lock-free queue.
+ * @brief 有界单生产者单消费者无锁队列
  * 
- * This queue is designed for high-performance communication between exactly
- * one producer thread and one consumer thread. The implementation is lock-free
- * and uses atomic operations for synchronization.
- *
- * Thread Safety:
- *   - One thread can safely enqueue elements (producer)
- *   - One thread can safely dequeue elements (consumer)
- *   - The same thread must not call both enqueue and dequeue
- *
- * @tparam T The type of elements stored in the queue
+ * 这是一个高性能的线程间通信队列,专门为单生产者-单消费者场景优化。
+ * 队列使用无锁设计,通过原子操作和内存序(memory ordering)保证线程安全。
+ * 
+ * 主要特性:
+ * 1. 预分配固定大小的存储空间,避免运行时内存分配
+ * 2. 使用原子操作代替互斥锁,降低同步开销
+ * 3. 通过内存对齐优化缓存访问,减少伪共享
+ * 4. 支持普通入队/出队和覆盖式入队/最新出队等操作
+ * 
+ * 注意事项:
+ * - 队列大小在初始化时指定,之后不可更改
+ * - 当指定2的幂大小时,索引计算会使用位运算优化
+ * - 生产者和消费者必须是不同的线程
+ * 
+ * @tparam T 队列中存储的元素类型
  */
 template <typename T>
 class BoundedSpscLockfreeQueue {
@@ -46,61 +64,94 @@ class BoundedSpscLockfreeQueue {
   BoundedSpscLockfreeQueue& operator=(BoundedSpscLockfreeQueue&&) = delete;
 
   /**
-   * @brief Initializes the queue with the specified size
-   * @param size The size of the queue (must be > 0 and <= QUEUE_MAX_SIZE)
-   * @param force_power_of_two If true, size must be a power of 2 for optimized indexing
-   * @return true if initialization succeeds, false otherwise
+   * @brief 初始化队列
+   * 
+   * 为队列分配指定大小的存储空间并进行初始化。如果指定force_power_of_two为true,
+   * 则size必须是2的幂,这样可以使用位运算来优化索引计算。
+   * 
+   * @param size 队列大小,必须大于0且不超过QUEUE_MAX_SIZE
+   * @param force_power_of_two 是否强制size为2的幂
+   * @return true 初始化成功
+   * @return false 初始化失败(size无效或内存分配失败)
    */
   bool Init(uint64_t size, bool force_power_of_two = false);
 
-  // 入队操作
   /**
-   * @brief Enqueues an element into the queue
-   * @param element The element to enqueue
-   * @return true if successful, false if queue is full
+   * @brief 将元素入队
+   * 
+   * 尝试将元素添加到队列尾部。如果队列已满,则入队失败。
+   * 该方法线程安全,但只能由生产者线程调用。
+   * 
+   * @param element 要入队的元素
+   * @return true 入队成功
+   * @return false 队列已满或未初始化
    */
   bool Enqueue(const T& element) { return EnqueueInternal(element, false); }
   bool Enqueue(T&& element) { return EnqueueInternal(std::move(element), false); }
   
   /**
-   * @brief Enqueues an element, overwriting oldest element if queue is full
-   * @param element The element to enqueue
-   * @return true if successful (always true unless queue is uninitialized)
+   * @brief 强制将元素入队
+   * 
+   * 将元素添加到队列尾部。如果队列已满,则覆盖最旧的元素。
+   * 该方法线程安全,但只能由生产者线程调用。
+   * 
+   * @param element 要入队的元素
+   * @return true 入队成功(除非队列未初始化,否则总是成功)
+   * @return false 队列未初始化
    */
   bool EnqueueOverwrite(const T& element) { return EnqueueInternal(element, true); }
   bool EnqueueOverwrite(T&& element) { return EnqueueInternal(std::move(element), true); }
 
-  // 出队操作
   /**
-   * @brief Dequeues an element from the queue
-   * @param[out] element Pointer to store the dequeued element
-   * @return true if successful, false if queue is empty
+   * @brief 从队列中取出最早的元素
+   * 
+   * 尝试从队列头部取出元素。如果队列为空,则出队失败。
+   * 该方法线程安全,但只能由消费者线程调用。
+   * 
+   * @param[out] element 用于存储出队元素的指针
+   * @return true 出队成功
+   * @return false 队列为空或未初始化或element为空
    */
   bool Dequeue(T* element);
 
   /**
-   * @brief Dequeues the latest element, discarding older elements
-   * @param[out] element Pointer to store the dequeued element
-   * @return true if successful, false if queue is empty
+   * @brief 从队列中取出最新的元素
+   * 
+   * 尝试获取队列中最新的元素(tail-1位置),并丢弃所有更早的元素。
+   * 该方法线程安全,但只能由消费者线程调用。
+   * 
+   * @param[out] element 用于存储出队元素的指针
+   * @return true 出队成功
+   * @return false 队列为空或未初始化或element为空
    */
   bool DequeueLatest(T* element);
 
   // 状态查询
   /**
-   * @brief Returns the current number of elements in the queue
-   * @return Current queue size
+   * @brief 返回队列当前元素数量
+   * 
+   * 获取队列中当前的元素数量。
+   * 
+   * @return 当前队列大小
    */
   uint64_t Size() const;
   
   /**
-   * @brief Checks if the queue is empty
-   * @return true if queue is empty, false otherwise
+   * @brief 检查队列是否为空
+   * 
+   * 判断队列是否为空。
+   * 
+   * @return true 队列为空
+   * @return false 队列不为空
    */
   bool Empty() const { return Size() == 0; }
   
   /**
-   * @brief Returns the maximum capacity of the queue
-   * @return Queue capacity
+   * @brief 返回队列最大容量
+   * 
+   * 获取队列的最大容量。
+   * 
+   * @return 队列容量
    */
   uint64_t Capacity() const { return pool_size_; }
 
@@ -109,16 +160,23 @@ class BoundedSpscLockfreeQueue {
   bool EnqueueInternal(const T& element, bool overwrite);
   
   /**
-   * @brief Checks if a number is a power of two
-   * @param x Number to check
-   * @return true if x is a power of two
+   * @brief 检查一个数是否是2的幂
+   * 
+   * 判断一个数是否是2的幂。
+   * 
+   * @param x 要检查的数
+   * @return true x是2的幂
+   * @return false x不是2的幂
    */
   static bool IsPowerOfTwo(uint64_t x) { return x > 0 && (x & (x - 1)) == 0; }
   
   /**
-   * @brief Calculates the index in the circular buffer
-   * @param num The logical position
-   * @return The actual index in the buffer
+   * @brief 计算循环缓冲区中的索引
+   * 
+   * 根据逻辑位置计算实际的缓冲区索引。
+   * 
+   * @param num 逻辑位置
+   * @return 实际缓冲区索引
    */
   uint64_t GetIndex(uint64_t num) const {
     // 2的幂情况：位掩码（~0.5ns）,非2的幂情况：使用减法方法（~12ns）
@@ -252,5 +310,3 @@ uint64_t BoundedSpscLockfreeQueue<T>::Size() const {
 }
 
 }  // namespace omnirt::common::util
-
-#endif  // OMNIRT_COMMON_UTIL_BOUNDED_SPSC_LOCKFREE_QUEUE_H_

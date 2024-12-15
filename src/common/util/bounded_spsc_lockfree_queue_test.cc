@@ -9,12 +9,34 @@
 namespace omnirt::common::util {
 namespace {
 
+/**
+ * @brief 有界单生产者单消费者无锁队列的测试类
+ * 
+ * 该测试类验证BoundedSpscLockfreeQueue的以下特性：
+ * - 初始化参数的有效性检查
+ * - 基本的入队出队操作
+ * - 队列满/空状态处理
+ * - 并发安全性
+ * - 性能表现
+ */
 class BoundedSpscLockfreeQueueTest : public ::testing::Test {
  protected:
   BoundedSpscLockfreeQueue<int> queue_;
 };
 
-// Test initialization
+/**
+ * @brief 测试队列初始化功能
+ * 
+ * 测试场景：
+ * 1. 有效初始化：验证正常容量的初始化
+ * 2. 无效初始化：测试容量为0的情况
+ * 3. 2的幂次要求：测试是否符合容量必须为2的幂次的约束
+ * 
+ * 验证点：
+ * - 初始化后的容量是否正确
+ * - 初始状态是否为空
+ * - 对无效参数的处理是否合理
+ */
 TEST_F(BoundedSpscLockfreeQueueTest, InitializationTest) {
   // Test valid initialization
   EXPECT_TRUE(queue_.Init(16));
@@ -35,7 +57,15 @@ TEST_F(BoundedSpscLockfreeQueueTest, InitializationTest) {
   EXPECT_TRUE(queue4.Init(16, true));   // Should work with power of two
 }
 
-// Test basic enqueue and dequeue operations
+/**
+ * @brief 测试队列的基本操作
+ * 
+ * 测试要点：
+ * - 入队操作的正确性
+ * - 出队操作的正确性
+ * - 队列状态（大小、是否为空）的准确性
+ * - 空队列出队的处理
+ */
 TEST_F(BoundedSpscLockfreeQueueTest, BasicOperations) {
   ASSERT_TRUE(queue_.Init(4));
   
@@ -55,7 +85,14 @@ TEST_F(BoundedSpscLockfreeQueueTest, BasicOperations) {
   EXPECT_FALSE(queue_.Dequeue(&value));
 }
 
-// Test queue full behavior
+/**
+ * @brief 测试队列满时的行为
+ * 
+ * 测试要点：
+ * - 验证队列满时的入队操作
+ * - 测试EnqueueOverwrite的覆盖写入功能
+ * - 确保数据完整性和顺序正确性
+ */
 TEST_F(BoundedSpscLockfreeQueueTest, QueueFullBehavior) {
   ASSERT_TRUE(queue_.Init(2));
 
@@ -73,7 +110,14 @@ TEST_F(BoundedSpscLockfreeQueueTest, QueueFullBehavior) {
   EXPECT_EQ(value, 3);  // Second value should be overwritten to 3
 }
 
-// Test DequeueLatest functionality
+/**
+ * @brief 测试获取最新数据功能
+ * 
+ * 测试要点：
+ * - 验证DequeueLatest的功能正确性
+ * - 确保能够跳过旧数据直接获取最新值
+ * - 验证操作后队列状态的正确性
+ */
 TEST_F(BoundedSpscLockfreeQueueTest, DequeueLatest) {
   ASSERT_TRUE(queue_.Init(4));
 
@@ -88,7 +132,18 @@ TEST_F(BoundedSpscLockfreeQueueTest, DequeueLatest) {
   EXPECT_TRUE(queue_.Empty());  // Queue should be empty after DequeueLatest
 }
 
-// Test concurrent producer-consumer scenario
+/**
+ * @brief 测试并发生产者-消费者场景
+ * 
+ * 测试要点：
+ * - 验证在高并发下的数据一致性
+ * - 测试生产者-消费者模型的正确性
+ * - 确保所有数据都被正确处理
+ * 
+ * 测试参数：
+ * - 操作次数：10000
+ * - 队列容量：16
+ */
 TEST_F(BoundedSpscLockfreeQueueTest, ConcurrentProducerConsumer) {
   static constexpr int kNumOperations = 10000;
   ASSERT_TRUE(queue_.Init(16));
@@ -128,7 +183,24 @@ TEST_F(BoundedSpscLockfreeQueueTest, ConcurrentProducerConsumer) {
   }
 }
 
-// Performance test cases
+/**
+ * @brief 性能测试用例
+ * 
+ * 测试场景：
+ * 1. 单线程性能测试
+ *    - 连续执行100万次入队出队操作
+ *    - 测量操作吞吐量
+ * 
+ * 2. 并发吞吐量测试
+ *    - 持续运行5秒
+ *    - 测试生产者-消费者模型下的最大吞吐量
+ *    - 统计单位时间内的操作次数
+ * 
+ * 测试参数：
+ * - 队列大小：1024
+ * - 单线程测试操作数：1,000,000
+ * - 并发测试持续时间：5秒
+ */
 TEST_F(BoundedSpscLockfreeQueueTest, PerformanceTest) {
   static constexpr int kQueueSize = 1024;
   static constexpr int kNumOperations = 1000000;  // 100万次操作

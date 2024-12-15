@@ -1,5 +1,35 @@
 // Copyright (c) 2023, AgiBot Inc.
 // All rights reserved.
+//
+// 日志工具库
+// 提供灵活的日志记录功能，支持同步和异步日志记录，以及不同的日志级别。
+//
+// 主要特性:
+// 1. 日志级别控制
+//    - 支持TRACE/DEBUG/INFO/WARN/ERROR/FATAL六个级别
+//    - 可动态调整日志级别
+// 2. 日志格式化
+//    - 支持fmt库格式化
+//    - 自动包含时间戳、线程ID、源文件信息等
+// 3. 异步日志
+//    - 提供异步日志记录功能
+//    - 使用阻塞队列实现
+// 4. 跨平台支持
+//    - 支持Linux和Windows
+//    - 自动适配不同平台的线程ID获取方式
+//
+// 使用示例:
+// @code
+//   // 基本日志记录
+//   AIMRT_INFO("Hello %s", "world");
+//   
+//   // 条件检查和日志
+//   AIMRT_CHECK_ERROR(ptr != nullptr, "Pointer is null");
+//   
+//   // 异步日志记录
+//   SimpleAsyncLogger logger;
+//   AIMRT_HL_INFO(logger, "Async log message");
+// @endcode
 
 #pragma once
 
@@ -9,6 +39,12 @@
 #include <string>
 #include <cstdint>
 
+/**
+ * @brief 源代码位置信息兼容层
+ * 
+ * 在C++20之前的版本中模拟std::source_location功能
+ * 提供文件名、行号、函数名等源码位置信息
+ */
 #define CURRENT_FILE __FILE__
 #define CURRENT_LINE __LINE__
 #define CURRENT_FUNCTION __FUNCTION__
@@ -39,17 +75,24 @@ class src_loc {
 #include "util/format.h"
 #include "util/time_util.h"
 
-// #define STRINGIFY(x) #x
-// #pragma message("GLIBC version: " STRINGIFY(__GLIBC__))
-
 #if __GLIBC__ == 2 && __GLIBC_MINOR__ < 30
-  // #pragma message("###########@@@@@@")  
   #include <sys/syscall.h>
   #define gettid() syscall(SYS_gettid)
 #endif
 
 namespace aimrt::common::util {
 
+/**
+ * @brief 日志级别常量定义
+ * 
+ * 定义六个标准日志级别，从低到高分别是:
+ * - TRACE: 最详细的跟踪信息
+ * - DEBUG: 调试信息
+ * - INFO:  一般信息
+ * - WARN:  警告信息
+ * - ERROR: 错误信息
+ * - FATAL: 致命错误
+ */
 constexpr uint32_t kLogLevelTrace = 0;
 constexpr uint32_t kLogLevelDebug = 1;
 constexpr uint32_t kLogLevelInfo = 2;
@@ -57,10 +100,42 @@ constexpr uint32_t kLogLevelWarn = 3;
 constexpr uint32_t kLogLevelError = 4;
 constexpr uint32_t kLogLevelFatal = 5;
 
+/**
+ * @brief 简单同步日志记录器
+ * 
+ * 提供基本的同步日志记录功能:
+ * - 支持不同日志级别
+ * - 自动记录时间戳和线程ID
+ * - 包含源代码位置信息
+ * 
+ * 示例:
+ * @code
+ *   SimpleLogger::Log(kLogLevelInfo, __LINE__, 0, __FILE__,
+ *                     __FUNCTION__, "Test message", 12);
+ * @endcode
+ */
 class SimpleLogger {
  public:
+  /**
+   * @brief 获取当前日志级别
+   * @return 始终返回0，允许所有级别的日志
+   */
   static uint32_t GetLogLevel() { return 0; }
 
+  /**
+   * @brief 记录一条日志
+   * 
+   * @param lvl 日志级别
+   * @param line 源代码行号
+   * @param column 源代码列号
+   * @param file_name 源文件名
+   * @param function_name 函数名
+   * @param log_data 日志内容
+   * @param log_data_size 日志内容长度
+   * 
+   * 日志格式:
+   * [时间.微秒][级别][线程ID][文件:行:列 @函数]消息
+   */
   static void Log(uint32_t lvl,
                   uint32_t line,
                   uint32_t column,
@@ -99,6 +174,21 @@ class SimpleLogger {
   }
 };
 
+/**
+ * @brief 简单异步日志记录器
+ * 
+ * 提供异步日志记录功能:
+ * - 使用独立线程写入日志
+ * - 通过阻塞队列传递日志消息
+ * - 自动管理日志线程的生命周期
+ * 
+ * 示例:
+ * @code
+ *   SimpleAsyncLogger logger;
+ *   logger.Log(kLogLevelInfo, __LINE__, 0, __FILE__,
+ *              __FUNCTION__, "Async message", 13);
+ * @endcode
+ */
 class SimpleAsyncLogger {
  public:
   SimpleAsyncLogger()
@@ -169,6 +259,21 @@ class SimpleAsyncLogger {
   std::thread log_thread_;
 };
 
+/**
+ * @brief 日志记录器包装器
+ * 
+ * 提供统一的日志接口:
+ * - 可以包装同步或异步日志记录器
+ * - 支持自定义日志级别控制
+ * - 支持自定义日志记录函数
+ * 
+ * 示例:
+ * @code
+ *   LoggerWrapper wrapper;
+ *   wrapper.log_func = CustomLogger::Log;
+ *   wrapper.Log(kLogLevelInfo, ...);
+ * @endcode
+ */
 struct LoggerWrapper {
   uint32_t GetLogLevel() const {
     return get_log_level_func();
@@ -190,36 +295,6 @@ struct LoggerWrapper {
   GetLogLevelFunc get_log_level_func = SimpleLogger::GetLogLevel;
   LogFunc log_func = SimpleLogger::Log;
 };
-
-// #ifdef CONCEPT_FEATURES
-// template <typename T>
-// concept LoggerType =
-//     requires(T t) {
-//       { t.GetLogLevel() } -> std::same_as<uint32_t>;
-//       { t.Log(0, 0, 0, nullptr, nullptr, nullptr, 0) };
-//     };
-// #else
-// template <typename T>
-// struct LoggerType {
-//   static const bool value = 
-//       std::is_constructible<uint32_t, decltype(std::declval<T>().GetLogLevel())>::value &&
-//       std::is_constructible<void, decltype(std::declval<T>().Log(0, 0, 0, nullptr, nullptr, nullptr, 0))>::value;
-// };
-// #endif
-
-// template <LoggerType Logger, typename... Args>
-// inline void LogImpl(const Logger& logger,
-//                     uint32_t lvl,
-//                     uint32_t line,
-//                     uint32_t column,
-//                     const char* file_name,
-//                     const char* function_name,
-//                     ::aimrt_fmt::format_string<Args...> fmt,
-//                     Args&&... args) {
-//   static_assert(LoggerType<Logger>::value, "Logger must satisfy LoggerType requirements");
-//   std::string log_str = ::aimrt_fmt::format(fmt, std::forward<Args>(args)...);
-//   logger.Log(lvl, line, column, file_name, function_name, log_str.c_str(), log_str.size());
-// }
 
 }  // namespace aimrt::common::util
 

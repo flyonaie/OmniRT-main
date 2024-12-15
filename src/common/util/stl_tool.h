@@ -1,6 +1,23 @@
 // Copyright (c) 2023, AgiBot Inc.
 // All rights reserved.
 
+/**
+ * @file stl_tool.h
+ * @brief STL工具库，提供容器操作和类型特征检查的通用工具
+ * 
+ * 本文件包含以下主要功能：
+ * 1. 类型特征检查：判断类型是否为可迭代容器或映射类型
+ * 2. 容器转字符串：将STL容器转换为可读的字符串格式
+ * 3. 容器比较：提供带序和无序的容器比较功能
+ * 
+ * 设计特点：
+ * - 使用SFINAE和类型特征实现编译期类型检查
+ * - 支持自定义格式化函数
+ * - 提供直观的调试输出格式
+ * 
+ * @note 所有函数都是线程安全的，因为它们不修改输入参数
+ */
+
 #pragma once
 
 #include <algorithm>
@@ -14,14 +31,27 @@
 
 namespace aimrt::common::util {
 
-// 定义可迭代类型的SFINAE检查
-// 要求类型T必须：
-// 1. 有 begin() 方法返回迭代器
-// 2. 有 end() 方法返回迭代器
-// 3. 有 size() 方法返回大小
+/**
+ * @brief 检查类型是否为可迭代容器的类型特征
+ * 
+ * 一个类型要被认为是可迭代的，必须满足以下条件：
+ * 1. 定义了iterator类型
+ * 2. 定义了value_type类型
+ * 3. 提供begin()方法返回iterator
+ * 4. 提供end()方法返回iterator
+ * 5. 提供size()方法返回size_type
+ * 
+ * @tparam T 要检查的类型
+ * @tparam void SFINAE辅助参数
+ */
 template <typename T, typename = void>
 struct is_iterable : std::false_type {};
 
+/**
+ * @brief is_iterable的特化版本，用于检查类型是否满足可迭代要求
+ * 
+ * 使用std::void_t和SFINAE技术检查类型是否具有必要的成员和方法
+ */
 template <typename T>
 struct is_iterable<T,
     std::void_t<
@@ -41,16 +71,28 @@ struct is_iterable<T,
                 typename T::size_type>>
     >> : std::true_type {};
 
+/// @brief is_iterable的辅助变量模板
 template <typename T>
 inline constexpr bool is_iterable_v = is_iterable<T>::value;
 
-// 定义映射类型的SFINAE检查
-// 要求类型T必须：
-// 1. 满足可迭代类型的所有要求
-// 2. 支持使用[]操作符访问元素
+/**
+ * @brief 检查类型是否为映射容器的类型特征
+ * 
+ * 一个类型要被认为是映射容器，必须满足以下条件：
+ * 1. 满足可迭代容器的所有要求
+ * 2. 定义了key_type类型
+ * 3. 定义了mapped_type类型
+ * 4. 支持operator[]访问元素
+ * 
+ * @tparam T 要检查的类型
+ * @tparam void SFINAE辅助参数
+ */
 template <typename T, typename = void>
 struct is_map : std::false_type {};
 
+/**
+ * @brief is_map的特化版本，用于检查类型是否满足映射容器要求
+ */
 template <typename T>
 struct is_map<T,
     std::void_t<
@@ -60,13 +102,29 @@ struct is_map<T,
         decltype(std::declval<T>()[std::declval<typename T::key_type>()])
     >> : std::true_type {};
 
+/// @brief is_map的辅助变量模板
 template <typename T>
 inline constexpr bool is_map_v = is_map<T>::value;
 
-// 将容器转换为字符串表示
-// @param t: 输入容器
-// @param f: 自定义的元素转换函数
-// @return: 格式化后的字符串
+/**
+ * @brief 将容器转换为格式化的字符串表示
+ * 
+ * 提供详细的容器内容展示，包括：
+ * - 容器大小
+ * - 每个元素的索引
+ * - 元素的自定义格式化输出
+ * 
+ * 输出格式示例：
+ * size = 3
+ * [index=0]: value1
+ * [index=1]: value2
+ * [index=2]: value3
+ * 
+ * @tparam T 容器类型，必须满足is_iterable要求
+ * @param t 要转换的容器
+ * @param f 元素转换函数，接收value_type返回string
+ * @return 格式化后的字符串
+ */
 template <typename T, typename = std::enable_if_t<is_iterable_v<T>>>
 std::string Container2Str(
     const T& t, const std::function<std::string(const typename T::value_type&)>& f) {
@@ -94,7 +152,13 @@ std::string Container2Str(
   return ss.str();
 }
 
-// Container2Str的简化版本，使用默认的流输出操作符
+/**
+ * @brief Container2Str的简化版本，使用operator<<进行元素转换
+ * 
+ * @tparam T 容器类型，必须满足is_iterable要求
+ * @param t 要转换的容器
+ * @return 格式化后的字符串
+ */
 template <typename T, typename = std::enable_if_t<is_iterable_v<T>>>
 std::string Container2Str(const T& t) {
   return Container2Str(
@@ -106,11 +170,29 @@ std::string Container2Str(const T& t) {
       });
 }
 
-// 将映射类型转换为字符串表示
-// @param m: 输入映射
-// @param fkey: 键转换函数
-// @param fval: 值转换函数
-// @return: 格式化后的字符串
+/**
+ * @brief 将映射容器转换为格式化的字符串表示
+ * 
+ * 提供详细的映射内容展示，包括：
+ * - 映射大小
+ * - 每个键值对的索引
+ * - 键和值的自定义格式化输出
+ * 
+ * 输出格式示例：
+ * size = 2
+ * [index=0]:
+ *   [key]: key1
+ *   [val]: value1
+ * [index=1]:
+ *   [key]: key2
+ *   [val]: value2
+ * 
+ * @tparam T 映射类型，必须满足is_map要求
+ * @param m 要转换的映射
+ * @param fkey 键转换函数
+ * @param fval 值转换函数
+ * @return 格式化后的字符串
+ */
 template <typename T, typename = std::enable_if_t<is_map_v<T>>>
 std::string Map2Str(const T& m,
                     const std::function<std::string(const typename T::key_type&)>& fkey,
@@ -151,7 +233,13 @@ std::string Map2Str(const T& m,
   return ss.str();
 }
 
-// Map2Str的简化版本，使用默认的流输出操作符
+/**
+ * @brief Map2Str的简化版本，使用operator<<进行键值转换
+ * 
+ * @tparam T 映射类型，必须满足is_map要求
+ * @param m 要转换的映射
+ * @return 格式化后的字符串
+ */
 template <typename T, typename = std::enable_if_t<is_map_v<T>>>
 std::string Map2Str(const T& m) {
   return Map2Str(
@@ -168,9 +256,18 @@ std::string Map2Str(const T& m) {
       });
 }
 
-// 检查两个容器是否相等（考虑顺序）
-// @param t1, t2: 要比较的两个容器
-// @return: 如果容器大小相等且对应位置的元素都相等，返回true
+/**
+ * @brief 检查两个容器是否相等（考虑元素顺序）
+ * 
+ * 比较规则：
+ * 1. 容器大小必须相等
+ * 2. 对应位置的元素必须相等（使用operator==）
+ * 
+ * @tparam T 容器类型，必须满足is_iterable要求
+ * @param t1 第一个容器
+ * @param t2 第二个容器
+ * @return 如果容器相等返回true，否则返回false
+ */
 template <typename T, typename = std::enable_if_t<is_iterable_v<T>>>
 bool CheckContainerEqual(const T& t1, const T& t2) {
   if (t1.size() != t2.size()) return false;
@@ -187,9 +284,20 @@ bool CheckContainerEqual(const T& t1, const T& t2) {
   return true;
 }
 
-// 检查两个容器是否相等（不考虑顺序）
-// @param input_t1, input_t2: 要比较的两个容器
-// @return: 如果容器大小相等且包含相同的元素（忽略顺序），返回true
+/**
+ * @brief 检查两个容器是否相等（不考虑元素顺序）
+ * 
+ * 比较规则：
+ * 1. 容器大小必须相等
+ * 2. 排序后对应位置的元素必须相等
+ * 
+ * @note 会修改输入容器的副本进行排序
+ * 
+ * @tparam T 容器类型，必须满足is_iterable要求
+ * @param input_t1 第一个容器
+ * @param input_t2 第二个容器
+ * @return 如果容器相等返回true，否则返回false
+ */
 template <typename T, typename = std::enable_if_t<is_iterable_v<T>>>
 bool CheckContainerEqualNoOrder(const T& input_t1, const T& input_t2) {
   auto t1(input_t1);
@@ -213,9 +321,19 @@ bool CheckContainerEqualNoOrder(const T& input_t1, const T& input_t2) {
   return true;
 }
 
-// 检查两个映射是否相等
-// @param map1, map2: 要比较的两个映射
-// @return: 如果映射大小相等且所有键值对都相等，返回true
+/**
+ * @brief 检查两个映射是否相等
+ * 
+ * 比较规则：
+ * 1. 映射大小必须相等
+ * 2. 所有键必须相同
+ * 3. 对应键的值必须相等
+ * 
+ * @tparam T 映射类型，必须满足is_map要求
+ * @param map1 第一个映射
+ * @param map2 第二个映射
+ * @return 如果映射相等返回true，否则返回false
+ */
 template <typename T, typename = std::enable_if_t<is_map_v<T>>>
 bool CheckMapEqual(const T& map1, const T& map2) {
   if (map1.size() != map2.size()) return false;

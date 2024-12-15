@@ -1,5 +1,12 @@
 // Copyright (c) 2023, AgiBot Inc.
 // All rights reserved.
+//
+// 缓冲区工具类的单元测试
+// 测试内容包括:
+// 1. 基本数据类型的序列化和反序列化
+// 2. 字符串的序列化和反序列化
+// 3. 缓冲区操作类的功能验证
+// 4. 边界条件和异常情况的处理
 
 #include <gtest/gtest.h>
 
@@ -7,6 +14,14 @@
 
 namespace aimrt::common::util {
 
+/**
+ * @brief 测试基本数据类型的序列化和反序列化
+ * 
+ * 测试SetBufFromUintXX和GetUintXXFromBuf函数:
+ * - uint16_t类型(2字节)
+ * - uint32_t类型(4字节)
+ * - uint64_t类型(8字节)
+ */
 TEST(SetGetBufTest, base) {
   char buf[8];
 
@@ -23,6 +38,15 @@ TEST(SetGetBufTest, base) {
   EXPECT_EQ(GetUint64FromBuf(buf), n64);
 }
 
+/**
+ * @brief 测试缓冲区操作类的基本功能
+ * 
+ * 测试BufferOperator和ConstBufferOperator的:
+ * - 基本数据类型的读写
+ * - 字符串的读写(不同长度类型)
+ * - 缓冲区的读写
+ * - 剩余空间计算
+ */
 TEST(BufferOperatorTest, base) {
   char buf[1024];
 
