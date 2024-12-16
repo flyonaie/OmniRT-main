@@ -29,13 +29,7 @@ endif()
 
 set(gflags_DOWNLOAD_URL
     "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz"
-    CACHE STRING "gflags download url" FORCE)
-set(gflags_DOWNLOAD_SHA256
-    "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf"
-    CACHE STRING "gflags download sha256" FORCE)
-
-# 添加 CMP0063 策略设置
-set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
+    CACHE STRING "")
 
 if(gflags_LOCAL_SOURCE)
   message(STATUS "using local gflags source: ${gflags_LOCAL_SOURCE}")
