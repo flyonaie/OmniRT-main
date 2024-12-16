@@ -25,7 +25,7 @@ file(GLOB_RECURSE head_files
     ${CMAKE_CURRENT_SOURCE_DIR}/light_signal.h
     ${CMAKE_CURRENT_SOURCE_DIR}/log_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stl_tool.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/string_util.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/string_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/time_util.h
     ${CMAKE_CURRENT_SOURCE_DIR}/url_encode.h
     ${CMAKE_CURRENT_SOURCE_DIR}/url_parser.h
@@ -38,8 +38,8 @@ file(GLOB_RECURSE test_files
     ${CMAKE_CURRENT_SOURCE_DIR}/deferred_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/light_signal_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/log_util_test.cc
-    # ${CMAKE_CURRENT_SOURCE_DIR}/stl_tool_test.cc
-    # ${CMAKE_CURRENT_SOURCE_DIR}/string_util_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/stl_tool_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/string_util_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/time_util_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/url_encode_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/url_parser_test.cc

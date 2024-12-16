@@ -2,6 +2,7 @@
 # All rights reserved.
 
 include(FetchContent)
+include(CheckLocalSource)
 
 message(STATUS "get gflags ...")
 
@@ -11,11 +12,15 @@ message(STATUS "get ${SRC_NAME} print ...")
 message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
 # 检查本地源码目录是否存在且包含必要文件
-set(LOCAL_SOURCE_DIR "${CMAKE_SOURCE_DIR}/_deps/${SRC_NAME}-src")
-if(EXISTS "${LOCAL_SOURCE_DIR}" AND IS_DIRECTORY "${LOCAL_SOURCE_DIR}"
-   AND EXISTS "${LOCAL_SOURCE_DIR}/CMakeLists.txt"
-   AND EXISTS "${LOCAL_SOURCE_DIR}/src")
-  set(gflags_LOCAL_SOURCE "${LOCAL_SOURCE_DIR}" CACHE PATH "Path to local ${SRC_NAME} source")
+check_local_source(
+  SRC_NAME "${SRC_NAME}"
+  SOURCE_DIR "_deps/${SRC_NAME}-src"
+  REQUIRED_FILES "CMakeLists.txt" "src"
+  RESULT_VAR "${SRC_NAME}_LOCAL_SOURCE"
+)
+
+if(gflags_LOCAL_SOURCE)
+  set(gflags_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/${gflags_LOCAL_SOURCE}" CACHE PATH "Path to local ${SRC_NAME} source")
   message(STATUS "Found local ${SRC_NAME} source at: ${gflags_LOCAL_SOURCE}")
 else()
   set(gflags_LOCAL_SOURCE "" CACHE PATH "Path to local ${SRC_NAME} source")
@@ -24,7 +29,13 @@ endif()
 
 set(gflags_DOWNLOAD_URL
     "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz"
-    CACHE STRING "")
+    CACHE STRING "gflags download url" FORCE)
+set(gflags_DOWNLOAD_SHA256
+    "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf"
+    CACHE STRING "gflags download sha256" FORCE)
+
+# 添加 CMP0063 策略设置
+set(CMAKE_POLICY_DEFAULT_CMP0063 NEW)
 
 if(gflags_LOCAL_SOURCE)
   message(STATUS "using local gflags source: ${gflags_LOCAL_SOURCE}")

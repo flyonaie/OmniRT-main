@@ -1660,7 +1660,7 @@ TEST(STRING_UTIL_TEST, Hash64Fnv1a_test) {
       TestCase{
           .name = "case 2",
           .data = "",
-          .want_result = 14695981039346656037});
+          .want_result = strtoull("14695981039346656037", nullptr, 10)});
 
   for (size_t ii = 0; ii < test_cases.size(); ++ii) {
     TestCase& cur_test_case = test_cases[ii];

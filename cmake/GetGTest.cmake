@@ -2,12 +2,21 @@
 # All rights reserved.
 
 include(FetchContent)
-
-message(STATUS "get googletest ...")
+include(CheckLocalSource)
 
 # 设置本地源码路径（需要根据实际路径修改）
+set(SRC_NAME "googletest")
+message(STATUS "get googletest ...")
 message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
-set(googletest_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/googletest-src" CACHE PATH "Path to local googletest source")
+# set(googletest_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/_deps/googletest-src" CACHE PATH "Path to local googletest source")
+
+# 检查本地源码目录是否存在且包含必要文件
+check_local_source(
+  SRC_NAME "${SRC_NAME}"
+  SOURCE_DIR "_deps/${SRC_NAME}-src"
+  REQUIRED_FILES "CMakeLists.txt" "src"
+  RESULT_VAR "${SRC_NAME}_LOCAL_SOURCE"
+)
 
 set(googletest_DOWNLOAD_URL
     "https://github.com/google/googletest/archive/v1.13.0.tar.gz"
