@@ -11,10 +11,19 @@
 #include "util/string_util.h"
 
 namespace YAML {
+
+/**
+ * @brief YAML转换器，用于将ExecutorManager::Options编码和解码为YAML节点。
+ */
 template <>
 struct convert<aimrt::runtime::core::executor::ExecutorManager::Options> {
   using Options = aimrt::runtime::core::executor::ExecutorManager::Options;
 
+  /**
+   * @brief 将Options对象编码为YAML节点。
+   * @param rhs 要编码的Options对象。
+   * @return 编码后的YAML节点。
+   */
   static Node encode(const Options& rhs) {
     Node node;
 
@@ -30,6 +39,12 @@ struct convert<aimrt::runtime::core::executor::ExecutorManager::Options> {
     return node;
   }
 
+  /**
+   * @brief 从YAML节点解码为Options对象。
+   * @param node 要解码的YAML节点。
+   * @param rhs 解码后的Options对象。
+   * @return 如果解码成功返回true，否则返回false。
+   */
   static bool decode(const Node& node, Options& rhs) {
     if (!node.IsMap()) return false;
 
@@ -51,10 +66,15 @@ struct convert<aimrt::runtime::core::executor::ExecutorManager::Options> {
     return true;
   }
 };
+
 }  // namespace YAML
 
 namespace aimrt::runtime::core::executor {
 
+/**
+ * @brief 初始化ExecutorManager。
+ * @param options_node 包含初始化选项的YAML节点。
+ */
 void ExecutorManager::Initialize(YAML::Node options_node) {
   RegisterAsioExecutorGenFunc();
   RegisterTBBExecutorGenFunc();
@@ -102,6 +122,9 @@ void ExecutorManager::Initialize(YAML::Node options_node) {
   AIMRT_INFO("Executor manager init complete");
 }
 
+/**
+ * @brief 启动ExecutorManager。
+ */
 void ExecutorManager::Start() {
   AIMRT_CHECK_ERROR_THROW(
       std::atomic_exchange(&state_, State::kStart) == State::kInit,
@@ -114,6 +137,9 @@ void ExecutorManager::Start() {
   AIMRT_INFO("Executor manager start completed.");
 }
 
+/**
+ * @brief 关闭ExecutorManager。
+ */
 void ExecutorManager::Shutdown() {
   if (std::atomic_exchange(&state_, State::kShutdown) == State::kShutdown)
     return;
@@ -131,6 +157,11 @@ void ExecutorManager::Shutdown() {
   executor_gen_func_map_.clear();
 }
 
+/**
+ * @brief 注册Executor生成函数。
+ * @param type Executor的类型。
+ * @param executor_gen_func 生成Executor的函数。
+ */
 void ExecutorManager::RegisterExecutorGenFunc(
     std::string_view type, ExecutorGenFunc&& executor_gen_func) {
   AIMRT_CHECK_ERROR_THROW(
@@ -140,6 +171,11 @@ void ExecutorManager::RegisterExecutorGenFunc(
   executor_gen_func_map_.emplace(type, std::move(executor_gen_func));
 }
 
+/**
+ * @brief 获取ExecutorManager的代理。
+ * @param module_info 模块的详细信息。
+ * @return ExecutorManager的代理。
+ */
 const ExecutorManagerProxy& ExecutorManager::GetExecutorManagerProxy(
     const util::ModuleDetailInfo& module_info) {
   AIMRT_CHECK_ERROR_THROW(
@@ -157,6 +193,11 @@ const ExecutorManagerProxy& ExecutorManager::GetExecutorManagerProxy(
   return *(emplace_ret.first->second);
 }
 
+/**
+ * @brief 获取指定名称的Executor。
+ * @param executor_name Executor的名称。
+ * @return Executor的引用。
+ */
 aimrt::executor::ExecutorRef ExecutorManager::GetExecutor(
     std::string_view executor_name) {
   auto finditr = executor_proxy_map_.find(std::string(executor_name));
@@ -168,6 +209,9 @@ aimrt::executor::ExecutorRef ExecutorManager::GetExecutor(
   return aimrt::executor::ExecutorRef();
 }
 
+/**
+ * @brief 注册AsioExecutor生成函数。
+ */
 void ExecutorManager::RegisterAsioExecutorGenFunc() {
   RegisterExecutorGenFunc("asio_thread", [this]() -> std::unique_ptr<ExecutorBase> {
     auto ptr = std::make_unique<AsioThreadExecutor>();
@@ -197,6 +241,9 @@ void ExecutorManager::RegisterAsioExecutorGenFunc() {
   });
 }
 
+/**
+ * @brief 注册TBBExecutor生成函数。
+ */
 void ExecutorManager::RegisterTBBExecutorGenFunc() {
   RegisterExecutorGenFunc("tbb_thread", [this]() -> std::unique_ptr<ExecutorBase> {
     auto ptr = std::make_unique<TBBThreadExecutor>();
@@ -205,6 +252,9 @@ void ExecutorManager::RegisterTBBExecutorGenFunc() {
   });
 }
 
+/**
+ * @brief 注册SimpleThreadExecutor生成函数。
+ */
 void ExecutorManager::RegisterSimpleThreadExecutorGenFunc() {
   RegisterExecutorGenFunc("simple_thread", [this]() -> std::unique_ptr<ExecutorBase> {
     auto ptr = std::make_unique<SimpleThreadExecutor>();
@@ -213,6 +263,9 @@ void ExecutorManager::RegisterSimpleThreadExecutorGenFunc() {
   });
 }
 
+/**
+ * @brief 注册TimeWheelExecutor生成函数。
+ */
 void ExecutorManager::RegisterTImeWheelExecutorGenFunc() {
   RegisterExecutorGenFunc("time_wheel", [this]() -> std::unique_ptr<ExecutorBase> {
     auto ptr = std::make_unique<TimeWheelExecutor>();
@@ -224,6 +277,10 @@ void ExecutorManager::RegisterTImeWheelExecutorGenFunc() {
   });
 }
 
+/**
+ * @brief 生成初始化报告。
+ * @return 包含初始化信息的报告列表。
+ */
 std::list<std::pair<std::string, std::string>> ExecutorManager::GenInitializationReport() const {
   AIMRT_CHECK_ERROR_THROW(
       state_.load() == State::kInit,
