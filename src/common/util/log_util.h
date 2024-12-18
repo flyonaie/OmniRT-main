@@ -69,6 +69,8 @@ class src_loc {
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
 
 #include "util/block_queue.h"
 #include "util/exception.h"
@@ -76,8 +78,9 @@ class src_loc {
 #include "util/time_util.h"
 
 #if __GLIBC__ == 2 && __GLIBC_MINOR__ < 30
-  #include <sys/syscall.h>
   #define gettid() syscall(SYS_gettid)
+#else
+  #define gettid() ::gettid()
 #endif
 
 namespace aimrt::common::util {
