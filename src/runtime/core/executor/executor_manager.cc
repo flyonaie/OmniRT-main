@@ -6,9 +6,13 @@
 #include "core/executor/asio_strand_executor.h"
 #include "core/executor/asio_thread_executor.h"
 #include "core/executor/simple_thread_executor.h"
+// #define TBB_THREAD_EXECUTOR
+#ifdef TBB_THREAD_EXECUTOR
 #include "core/executor/tbb_thread_executor.h"
+#endif
 #include "core/executor/time_wheel_executor.h"
 #include "util/string_util.h"
+
 
 namespace YAML {
 
@@ -77,7 +81,9 @@ namespace aimrt::runtime::core::executor {
  */
 void ExecutorManager::Initialize(YAML::Node options_node) {
   RegisterAsioExecutorGenFunc();
+#ifdef TBB_THREAD_EXECUTOR
   RegisterTBBExecutorGenFunc();
+#endif
   RegisterSimpleThreadExecutorGenFunc();
   RegisterTImeWheelExecutorGenFunc();
 
@@ -244,6 +250,7 @@ void ExecutorManager::RegisterAsioExecutorGenFunc() {
 /**
  * @brief 注册TBBExecutor生成函数。
  */
+#ifdef TBB_THREAD_EXECUTOR
 void ExecutorManager::RegisterTBBExecutorGenFunc() {
   RegisterExecutorGenFunc("tbb_thread", [this]() -> std::unique_ptr<ExecutorBase> {
     auto ptr = std::make_unique<TBBThreadExecutor>();
@@ -251,6 +258,7 @@ void ExecutorManager::RegisterTBBExecutorGenFunc() {
     return ptr;
   });
 }
+#endif
 
 /**
  * @brief 注册SimpleThreadExecutor生成函数。

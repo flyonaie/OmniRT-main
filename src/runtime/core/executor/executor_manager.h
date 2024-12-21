@@ -81,7 +81,9 @@ class ExecutorManager {
 
  private:
   void RegisterAsioExecutorGenFunc();
+#ifdef TBB_THREAD_EXECUTOR
   void RegisterTBBExecutorGenFunc();
+#endif
   void RegisterSimpleThreadExecutorGenFunc();
   void RegisterTImeWheelExecutorGenFunc();
 

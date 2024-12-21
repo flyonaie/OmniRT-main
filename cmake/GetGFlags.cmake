@@ -4,11 +4,12 @@
 include(FetchContent)
 include(CheckLocalSource)
 
-message(STATUS "get gflags ...")
+# 在最开始就设置 CMP0063 策略
+cmake_policy(SET CMP0063 NEW)
 
-# 设置本地源码路径
+# 设置本地源码路径（需要根据实际路径修改）
 set(SRC_NAME "gflags")
-message(STATUS "get ${SRC_NAME} print ...")
+message(STATUS "get ${SRC_NAME} ...")
 message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
 
 # 检查本地源码目录是否存在且包含必要文件
@@ -19,20 +20,11 @@ check_local_source(
   RESULT_VAR "${SRC_NAME}_LOCAL_SOURCE"
 )
 
-if(gflags_LOCAL_SOURCE)
-  set(gflags_LOCAL_SOURCE "${CMAKE_SOURCE_DIR}/${gflags_LOCAL_SOURCE}" CACHE PATH "Path to local ${SRC_NAME} source")
-  message(STATUS "Found local ${SRC_NAME} source at: ${gflags_LOCAL_SOURCE}")
-else()
-  set(gflags_LOCAL_SOURCE "" CACHE PATH "Path to local ${SRC_NAME} source")
-  message(STATUS "Local ${SRC_NAME} source not found or incomplete, will download from remote")
-endif()
-
 set(gflags_DOWNLOAD_URL
     "https://github.com/gflags/gflags/archive/v2.2.2.tar.gz"
     CACHE STRING "")
 
 if(gflags_LOCAL_SOURCE)
-  message(STATUS "using local gflags source: ${gflags_LOCAL_SOURCE}")
   FetchContent_Declare(
     gflags
     SOURCE_DIR ${gflags_LOCAL_SOURCE}
@@ -45,28 +37,44 @@ else()
     OVERRIDE_FIND_PACKAGE)
 endif()
 
-FetchContent_GetProperties(gflags)
-if(NOT gflags_POPULATED)
-  FetchContent_Populate(gflags)
-  
-  set(BUILD_TESTING
-      OFF
-      CACHE BOOL "")
+# Wrap it in a function to restrict the scope of the variables
+function(get_gflags)
+  FetchContent_GetProperties(gflags)
+  if(NOT gflags_POPULATED)
+    FetchContent_Populate(gflags)
+    
+    # 设置 gflags 特定的构建选项
+    set(BUILD_TESTING OFF CACHE BOOL "Disable gflags testing" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build static libraries" FORCE)
+    set(BUILD_STATIC_LIBS ON CACHE BOOL "Build static libraries" FORCE)
+    set(BUILD_gflags_LIB ON CACHE BOOL "Build gflags library" FORCE)
+    set(BUILD_gflags_nothreads_LIB OFF CACHE BOOL "Disable no-threads library" FORCE)
+    set(GFLAGS_USE_TARGET_NAMESPACE ON CACHE BOOL "Use target namespace" FORCE)
+    
+    # 设置可见性相关选项
+    set(CMAKE_CXX_VISIBILITY_PRESET hidden CACHE STRING "Symbol visibility preset" FORCE)
+    set(CMAKE_VISIBILITY_INLINES_HIDDEN YES CACHE BOOL "Hide inlines" FORCE)
+    set(CMAKE_POLICY_DEFAULT_CMP0063 NEW CACHE STRING "Set CMP0063 policy" FORCE)
+    
+    # 修改 gflags 的 CMakeLists.txt 文件
+    file(READ ${gflags_SOURCE_DIR}/CMakeLists.txt TMP_VAR)
+    string(REPLACE "  set (PKGCONFIG_INSTALL_DIR " "# set (PKGCONFIG_INSTALL_DIR " TMP_VAR "${TMP_VAR}")
+    
+    # 添加必要的策略设置和可见性控制
+    set(NEW_CMAKE_CONTENT 
+"cmake_policy(SET CMP0063 NEW)
+set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN YES)
+${TMP_VAR}")
+    
+    file(WRITE ${gflags_SOURCE_DIR}/CMakeLists.txt "${NEW_CMAKE_CONTENT}")
 
-  # 创建临时CMake策略文件
-  file(WRITE "${gflags_SOURCE_DIR}/cmake_policies.cmake"
-       "if(POLICY CMP0063)\n  cmake_policy(SET CMP0063 OLD)\nendif()\n")
+    # 添加子目录
+    add_subdirectory(${gflags_SOURCE_DIR} ${gflags_BINARY_DIR})
+  endif()
+endfunction()
 
-  # 读取原始CMakeLists.txt
-  file(READ ${gflags_SOURCE_DIR}/CMakeLists.txt TMP_VAR)
-  
-  # 在文件开头添加include语句
-  file(WRITE ${gflags_SOURCE_DIR}/CMakeLists.txt 
-       "include(${gflags_SOURCE_DIR}/cmake_policies.cmake)\n${TMP_VAR}")
-
-  add_subdirectory(${gflags_SOURCE_DIR} ${gflags_BINARY_DIR})
-
-endif()
+get_gflags()
 
 # import targets:
 # gflags::gflags

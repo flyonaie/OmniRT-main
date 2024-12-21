@@ -28,6 +28,7 @@ TEST_F(ExecutorManagerTest, initialize1) {
   executor_manager_.Initialize(options_node);
 }
 
+#ifdef TBB_THREAD_EXECUTOR
 TEST_F(ExecutorManagerTest, initialize2) {
   YAML::Node options_node = YAML::Load(R"str(
 executors:
@@ -57,6 +58,7 @@ executors:
   EXPECT_EQ(aimrt::util::ToStdStringView(executor_ptr->name(executor_ptr->impl)), "test_executor_1");
   EXPECT_EQ(executor_manager_.GetAllExecutors().size(), 2);
 }
+#endif
 
 TEST_F(ExecutorManagerTest, initialize3) {
   YAML::Node options_node = YAML::Load(R"str(

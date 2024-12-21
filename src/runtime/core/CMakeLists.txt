@@ -17,24 +17,30 @@ file(GLOB_RECURSE head_files
     ${CMAKE_CURRENT_SOURCE_DIR}/util/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*.h
-    # ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.h
     ${CMAKE_CURRENT_SOURCE_DIR}/logger/*.h
+    # ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.h
     )
 file(GLOB_RECURSE src 
     ${CMAKE_CURRENT_SOURCE_DIR}/util/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*.cc
-    # ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/executor/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/logger/*.cc
+    # ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*.cc
     )
 file(GLOB_RECURSE test_files 
     ${CMAKE_CURRENT_SOURCE_DIR}/util/*_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/configurator/*_test.cc
-    # ${CMAKE_CURRENT_SOURCE_DIR}/executor/*_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/executor/*_test.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/logger/*_test.cc
+    # ${CMAKE_CURRENT_SOURCE_DIR}/plugin/*_test.cc
     )
 list(REMOVE_ITEM src ${test_files})
+list(REMOVE_ITEM src ${CMAKE_CURRENT_SOURCE_DIR}/executor/tbb_thread_executor.cc)
+list(REMOVE_ITEM head_files ${CMAKE_CURRENT_SOURCE_DIR}/executor/tbb_thread_executor.h)
+list(REMOVE_ITEM test_files ${CMAKE_CURRENT_SOURCE_DIR}/executor/tbb_thread_executor_test.cc)
 
 # Add target
 add_library(${CUR_TARGET_NAME} SHARED)
@@ -58,9 +64,9 @@ target_link_libraries(
   PUBLIC ${CMAKE_DL_LIBS}
          asio::asio
          yaml-cpp::yaml-cpp
-         TBB::tbb
-         TBB::tbbmalloc
-         TBB::tbbmalloc_proxy
+        #  TBB::tbbmalloc
+        #  TBB::tbbmalloc_proxy
+        #  TBB::tbb
          aimrt::interface::aimrt_module_cpp_interface
         #  aimrt::interface::aimrt_core_plugin_interface
          aimrt::common::util)
@@ -86,5 +92,6 @@ endif()
 
 # Set test of target
 if(AIMRT_BUILD_TESTS AND test_files)
+  message("RUNTIME-CORE-CUR_TARGET_NAME: ${CUR_TARGET_NAME}")
   add_gtest_target(TEST_TARGET ${CUR_TARGET_NAME} TEST_SRC ${test_files})
 endif()
