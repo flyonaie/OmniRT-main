@@ -100,6 +100,8 @@ if(WIN32)
   add_compile_definitions(NOMINMAX)
 endif()
 
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+
 # Build document
 if(AIMRT_BUILD_DOCUMENT AND UNIX)
   message(STATUS "gen document ...")
@@ -181,7 +183,7 @@ if(AIMRT_BUILD_RUNTIME)
   include(GetAsio)
   include(GetGFlags)
   include(GetYamlCpp)
-  include(GetTBB)
+  # include(GetTBB)
 
   if(AIMRT_BUILD_PYTHON_RUNTIME)
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
