@@ -17,6 +17,7 @@ _deps/
 build_*/
 release_*/
 install_*/
+!release_notes/
 .cache
 *.gcno
 *.gcda
