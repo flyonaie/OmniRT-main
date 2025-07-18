@@ -1,0 +1,17 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+syntax = "proto3";
+
+package aimrt.protocols.example;
+
+// 示例消息
+message ExampleFoo {
+  int32 code = 1;//状态码
+  string data = 2;//数据
+}
+
+// 示例消息
+message ExampleBar {
+  int32 num = 1;//数字
+}

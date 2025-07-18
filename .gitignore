@@ -14,6 +14,9 @@ compile_commands.json
 .vscode/
 .idea/
 _deps/
+build*/
+release*/
+install*/
 .cache
 *.gcno
 *.gcda

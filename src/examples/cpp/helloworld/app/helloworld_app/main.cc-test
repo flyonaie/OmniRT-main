@@ -1,0 +1,52 @@
+#include <csignal>
+#include <iostream>
+
+#include "aimrt_module_cpp_interface/module_base.h"
+
+using namespace aimrt;
+
+class HelloWorldModule : public ModuleBase {
+ public:
+  HelloWorldModule() = default;
+  ~HelloWorldModule() override = default;
+
+  ModuleInfo Info() const override {
+    ModuleInfo info;
+    info.name = "HelloWorld";
+    info.author = "lcx";
+    return info;
+  }
+
+  bool Initialize(CoreRef core) override {
+    std::cout << "HelloWorldModule initializing..." << std::endl;
+    return true;
+  }
+
+  bool Start() override {
+    std::cout << "HelloWorldModule starting..." << std::endl;
+    return true;
+  }
+
+  void Shutdown() override {
+    std::cout << "HelloWorldModule shutting down..." << std::endl;
+  }
+};
+
+int32_t main(int32_t argc, char** argv) {
+ 
+  std::cout << "AimRT start..." << std::endl;
+
+  HelloWorldModule module;
+  CoreRef core;  
+
+  std::cout << "Module name: " << module.Info().name << std::endl;
+  std::cout << "Module author: " << module.Info().author << std::endl;
+
+  module.Initialize(core);
+  module.Start();
+  module.Shutdown();
+
+  std::cout << "AimRT exit." << std::endl;
+
+  return 0;
+}

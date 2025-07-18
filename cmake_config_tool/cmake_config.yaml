@@ -1,0 +1,81 @@
+AIMRT_BUILD_CLI_TOOLS:
+  description: AimRT build aimrt command line tools.
+  value: false
+AIMRT_BUILD_DOCUMENT:
+  description: AimRT build document.
+  value: false
+AIMRT_BUILD_ECHO_PLUGIN:
+  description: AimRT build echo plugin.
+  value: false
+AIMRT_BUILD_EXAMPLES:
+  description: AimRT build examples.
+  value: false
+AIMRT_BUILD_GRPC_PLUGIN:
+  description: AimRT build grpc plugin.
+  value: false
+AIMRT_BUILD_ICEORYX_PLUGIN:
+  description: AimRT build iceoryx plugin.
+  value: false
+AIMRT_BUILD_LOG_CONTROL_PLUGIN:
+  description: AimRT build log control plugin.
+  value: false
+AIMRT_BUILD_MQTT_PLUGIN:
+  description: AimRT build mqtt plugin.
+  value: false
+AIMRT_BUILD_NET_PLUGIN:
+  description: AimRT build net plugin.
+  value: false
+AIMRT_BUILD_OPENTELEMETRY_PLUGIN:
+  description: AimRT build opentelemetry plugin.
+  value: false
+AIMRT_BUILD_PARAMETER_PLUGIN:
+  description: AimRT build parameter plugin.
+  value: false
+AIMRT_BUILD_PYTHON_PACKAGE:
+  description: AimRT build python package.
+  value: false
+AIMRT_BUILD_PYTHON_RUNTIME:
+  description: AimRT build python runtime.
+  value: false
+AIMRT_BUILD_RECORD_PLAYBACK_PLUGIN:
+  description: AimRT build record playback plugin.
+  value: false
+AIMRT_BUILD_ROS2_PLUGIN:
+  description: AimRT build ros2 plugin.
+  value: false
+AIMRT_BUILD_RUNTIME:
+  description: AimRT build runtime.
+  value: true
+AIMRT_BUILD_TESTS:
+  description: AimRT build tests.
+  value: true
+AIMRT_BUILD_TIME_MANIPULATOR_PLUGIN:
+  description: AimRT build time manipulator plugin.
+  value: false
+AIMRT_BUILD_WITH_PROTOBUF:
+  description: AimRT build with protobuf.
+  value: false
+AIMRT_BUILD_WITH_ROS2:
+  description: AimRT build with ros2.
+  value: false
+AIMRT_BUILD_WITH_WERROR:
+  description: AimRT build with -Werror option. (Experimental)
+  value: false
+AIMRT_BUILD_ZENOH_PLUGIN:
+  description: AimRT build zenoh plugin.
+  value: false
+AIMRT_EXECUTOR_USE_STDEXEC:
+  description: AimRT use stdexec as executor impl. (Experimental)
+  value: false
+AIMRT_INSTALL:
+  description: Enable installation of AimRT.
+  value: false
+AIMRT_USE_FMT_LIB:
+  description: AimRT use fmt library.
+  value: true
+AIMRT_USE_LOCAL_PROTOC_COMPILER:
+  description: AimRT use local protoc compiler.
+  value: false
+AIMRT_USE_PROTOC_PYTHON_PLUGIN:
+  description: AimRT use protoc python plugin.
+  value: false

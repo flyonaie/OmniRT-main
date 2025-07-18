@@ -1,0 +1,37 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+#pragma once
+
+#include <string>
+#include "aimrt_module_protobuf_interface/rpc/rpc_service.h"
+#include "aimrt_module_protobuf_interface/rpc/rpc_status.h"
+#include "example_service.pb.h"
+
+namespace aimrt::examples::cpp::pb_rpc::normal_rpc_sync_server_module {
+
+class ExampleServiceSyncServiceImpl : public aimrt::protocols::example::ExampleServiceSyncService {
+ public:
+  ExampleServiceSyncServiceImpl() = default;
+  ~ExampleServiceSyncServiceImpl() override = default;
+
+  aimrt::rpc::Status GetFooData(
+      aimrt::rpc::ContextRef ctx,
+      const ::aimrt::protocols::example::GetFooDataReq& req,
+      ::aimrt::protocols::example::GetFooDataRsp& rsp) override;
+
+  aimrt::rpc::Status GetBarData(
+      aimrt::rpc::ContextRef ctx,
+      const ::aimrt::protocols::example::GetBarDataReq& req,
+      ::aimrt::protocols::example::GetBarDataRsp& rsp) override;
+
+ protected:
+  // 通用RPC处理函数
+  aimrt::rpc::Status handleGenericCall(
+      const std::string& funcName,
+      aimrt::rpc::ContextRef ctx,
+      const google::protobuf::Message& request,
+      google::protobuf::Message& response);
+};
+
+}  // namespace aimrt::examples::cpp::pb_rpc::normal_rpc_sync_server_module

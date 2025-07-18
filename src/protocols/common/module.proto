@@ -1,0 +1,35 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+syntax = "proto3";
+
+//引入其他.proto文件中定义的消息类型或枚举类型
+import "header.proto";
+
+package aimrt.protocols.common;
+
+message ModuleStatus {
+  Header header = 1;//消息的元数据
+  string from = 2;//消息的来源
+
+  message Status {
+    //oneof表示一组字段中同一时刻只能有一个字段存在值。而oneof value中的value是给这个字段组起的名字。
+    oneof value {
+      bool bool_value = 1;
+      int64 int_value = 2;
+      double double_value = 3;
+      string string_value = 4;
+      bytes bytes_value = 5;
+    }
+  }
+
+  map<string, Status> status_map = 3;//状态的映射
+}
+
+message ModuleException {
+  Header header = 1;//消息的元数据
+  string from = 2;//消息的来源
+  int64 code = 3;//错误码
+  string msg = 4;//错误消息
+  map<string, string> context = 5;//错误上下文
+}

@@ -1,0 +1,28 @@
+#pragma once
+
+#include "rpc_generator.h"
+#include <string>
+
+namespace aimrt::examples::cpp::pb_rpc {
+
+DEFINE_RPC_SERVICE(ExampleService) {
+public:
+    /// @rpc_method
+    /// @timeout 2000ms
+    /// @retry 3
+    int Add(int a, int b) {
+        return a + b;
+    }
+
+    /// @rpc_method
+    /// @async true
+    std::string Echo(std::string msg) {
+        return "echo: " + msg;
+    }
+
+    // 自动注册RPC方法
+    RPC_METHOD(Add);
+    RPC_ASYNC_METHOD(Echo);
+};
+
+} // namespace aimrt::examples::cpp::pb_rpc

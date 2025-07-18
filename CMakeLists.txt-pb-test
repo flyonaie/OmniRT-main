@@ -1,0 +1,47 @@
+# Copyright (c) 2023, AgiBot Inc.
+# All rights reserved.
+
+cmake_minimum_required(VERSION 3.24)
+
+# 添加全局ABI设置
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=1)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/toolchain-x86-linux-gnueabihf.cmake)
+
+project(aimrt LANGUAGES C CXX)
+
+# Prevent variables from being reset by option
+# This setting allows predefined variables to take precedence for FetchContent_MakeAvailable()
+# See: https://cmake.org/cmake/help/latest/policy/CMP0077.html
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
+# Set cmake path
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+option(AIMRT_USE_FMT_LIB "AimRT use fmt library." ON)
+option(AIMRT_BUILD_WITH_PROTOBUF "AimRT build with protobuf." ON)
+option(AIMRT_BUILD_EXAMPLES "AimRT build examples." ON)
+
+
+# Some necessary settings
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+
+# 在项目定义之前设置FetchContent的全局配置
+set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/_deps" CACHE PATH "Dependencies sources directory")
+
+
+# Include cmake module
+include(NamespaceTool)
+
+if(AIMRT_USE_FMT_LIB) 
+  include(GetFmt)
+endif()
+
+include(GetProtobuf)
+include(ProtobufGenCode)
+
+add_subdirectory(src)
+

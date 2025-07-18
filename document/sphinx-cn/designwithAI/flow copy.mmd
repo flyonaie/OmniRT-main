@@ -1,0 +1,33 @@
+graph TD
+    %% Main Initialization Flow
+    A[AIMRTCore Instance Init] --> B[CoreManager Init]
+    B --> B1[YAML Config Parse]
+    B --> B2[CoreProxy Init]
+    B --> B3[CoreProxy Map Init]
+    
+    %% Module Wrapper Flow
+    B --> C[ModuleWrapper Init]
+    C --> C1[CoreManagerProxy Gen]
+    C1 --> |core_proxy_map| C2[Module CoreProxy Config]
+    C2 --> C3[ModuleBase Init]
+    C3 --> |this, core_base| C4[Module User Init]
+    C4 --> |CoreRef core_base| D[Complete]
+
+    %% Layer Architecture
+    subgraph Architecture Layers
+        E[Interface Layer]
+        F[Reference Layer]
+        G[Proxy Layer]
+        H[Implementation Layer]
+    end
+    
+    E --> |ref| F
+    F --> |proxy| G
+    G --> |impl| H
+
+    %% Style
+    classDef process fill:#f9f,stroke:#333,stroke-width:2px
+    classDef layer fill:#bbf,stroke:#333,stroke-width:2px
+    
+    class A,B,C process
+    class E,F,G,H layer

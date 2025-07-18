@@ -1,0 +1,21 @@
+// Copyright (c) 2023, AgiBot Inc.  // 版权声明：2023年AgiBot公司版权所有
+// All rights reserved.  // 保留所有权利
+
+/**
+ * @file error.proto
+ * @brief 错误消息定义文件
+ * @details 定义系统通用的错误信息格式
+ */
+
+syntax = "proto3";  // 指定使用Protocol Buffer版本3语法，这是最新的主要版本，支持更多特性
+
+/**
+ * @brief 包名定义
+ * @details 指定生成代码的命名空间，形成清晰的代码层次结构
+ */
+package aimrt.protocols.common;  // 定义包名，生成的C++代码会放在aimrt::protocols::common命名空间下
+
+message Error {  // 定义Error消息类型，将被编译为C++类
+  int64 code = 1;  // 错误码字段，字段编号1，用于唯一标识错误类型
+  string msg = 2;  // 错误消息字段，字段编号2，存储错误的具体描述文本
+}

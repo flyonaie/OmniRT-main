@@ -1,0 +1,62 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+#include "normal_rpc_sync_server_module/service.h"
+#include "aimrt_module_protobuf_interface/util/protobuf_tools.h"
+#include "normal_rpc_sync_server_module/global.h"
+#include "normal_rpc_sync_server_module/function_registry.h"
+#include <string>
+
+namespace aimrt::examples::cpp::pb_rpc::normal_rpc_sync_server_module {
+
+std::string GetFooData(std::string msg) {
+    return "echo " + msg;
+}
+
+std::string GetBarData(std::string msg) {
+    return "echo " + msg;
+}
+
+int func1(int a) { return a; }
+int func2(int a, int b) { return a + b; }
+int func3(int a, int b, int c) { return a + b + c; }
+int func4(int a, int b, int c, int d) { return a + b + c + d; }
+int func5(int a, int b, int c, int d, int e) { return a + b + c + d + e; }
+int func6(int a, int b, int c, int d, int e, int f) { return a + b + c + d + e + f; }
+int func7(int a, int b, int c, int d, int e, int f, int g) { return a + b + c + d + e + f + g; }
+
+// 自动注册所有函数
+REGISTER_FUNCTION(func1);
+REGISTER_FUNCTION(func2);
+REGISTER_FUNCTION(func3);
+REGISTER_FUNCTION(func4);
+REGISTER_FUNCTION(func5);
+REGISTER_FUNCTION(func6);
+REGISTER_FUNCTION(func7);
+
+aimrt::rpc::Status ExampleServiceSyncServiceImpl::GetFooData(
+    aimrt::rpc::ContextRef ctx,
+    const ::aimrt::protocols::example::GetFooDataReq& req,
+    ::aimrt::protocols::example::GetFooDataRsp& rsp) {
+    rsp.set_msg(GetFooData(req.msg()));
+    return aimrt::rpc::Status::OK();
+}
+
+aimrt::rpc::Status ExampleServiceSyncServiceImpl::GetBarData(
+    aimrt::rpc::ContextRef ctx,
+    const ::aimrt::protocols::example::GetBarDataReq& req,
+    ::aimrt::protocols::example::GetBarDataRsp& rsp) {
+    rsp.set_msg(GetBarData(req.msg()));
+    return aimrt::rpc::Status::OK();
+}
+
+// 通用RPC处理函数
+aimrt::rpc::Status ExampleServiceSyncServiceImpl::handleGenericCall(
+    const std::string& funcName,
+    aimrt::rpc::ContextRef ctx,
+    const google::protobuf::Message& request,
+    google::protobuf::Message& response) {
+    return FunctionRegistry::instance().handleRpcCall(funcName, ctx, request, response);
+}
+
+}  // namespace aimrt::examples::cpp::pb_rpc::normal_rpc_sync_server_module

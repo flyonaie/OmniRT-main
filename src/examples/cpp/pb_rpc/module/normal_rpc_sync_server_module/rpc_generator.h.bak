@@ -1,0 +1,68 @@
+#pragma once
+
+#include <type_traits>
+#include <string_view>
+#include "aimrt_module_protobuf_interface/rpc/rpc_status.h"
+
+namespace aimrt::rpc::generator {
+
+// 编译期类型特征
+template<typename T>
+struct function_traits : function_traits<decltype(&T::operator())> {};
+
+template<typename R, typename... Args>
+struct function_traits<R(*)(Args...)> {
+    using return_type = R;
+    using arguments = std::tuple<Args...>;
+    static constexpr size_t arity = sizeof...(Args);
+};
+
+// RPC方法描述
+struct RpcMethodDesc {
+    std::string_view name;
+    std::string_view timeout;
+    int retry_count;
+    bool async;
+};
+
+// 编译期RPC方法注册
+template<auto Func, typename Class>
+struct RpcMethod {
+    static constexpr RpcMethodDesc desc{
+        .name = __PRETTY_FUNCTION__,
+        .timeout = "1000ms",
+        .retry_count = 3,
+        .async = false
+    };
+
+    template<typename... Args>
+    static auto Call(Class* instance, Args&&... args) {
+        if constexpr (desc.async) {
+            return std::async(std::launch::async, Func, instance, std::forward<Args>(args)...);
+        } else {
+            return (instance->*Func)(std::forward<Args>(args)...);
+        }
+    }
+};
+
+// RPC服务基类
+template<typename Derived>
+class RpcService {
+protected:
+    template<auto Func>
+    auto RegisterMethod() {
+        return RpcMethod<Func, Derived>();
+    }
+};
+
+} // namespace aimrt::rpc::generator
+
+// 宏定义用于简化注册
+#define RPC_METHOD(func) \
+    static constexpr auto rpc_##func = RegisterMethod<&func>()
+
+#define DEFINE_RPC_SERVICE(ServiceName) \
+    class ServiceName : public aimrt::rpc::generator::RpcService<ServiceName>
+
+#define RPC_ASYNC_METHOD(func) \
+    static constexpr auto rpc_##func = RegisterMethod<&func, true>()

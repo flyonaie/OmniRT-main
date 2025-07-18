@@ -1,0 +1,24 @@
+cmake_minimum_required(VERSION 3.14)
+project(JsonConfExample)
+
+# 设置C++标准
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 添加包含目录
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../common/
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../../_deps/nlohmann_json-src/single_include/
+)
+
+# 创建带有json.hpp的完整示例（如果需要）
+add_executable(json_example
+    jsonconf_app.cc
+)
+
+# 安装规则
+install(TARGETS json_example
+    DESTINATION bin
+)

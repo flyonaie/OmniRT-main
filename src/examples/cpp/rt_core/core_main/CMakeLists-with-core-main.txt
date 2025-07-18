@@ -1,0 +1,68 @@
+# Copyright (c) 2023, AgiBot Inc.
+# All rights reserved.
+
+cmake_minimum_required(VERSION 3.24)
+
+project(core_main LANGUAGES C CXX)
+
+# Enable verbose output
+# set(CMAKE_VERBOSE_MAKEFILE ON)
+
+# Some necessary settings
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Include cmake module
+message(STATUS "CMAKE_SOURCE_DIR: ${CMAKE_SOURCE_DIR}")
+
+# 计算到项目根目录的相对路径
+set(PROJECT_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../../)
+
+# 添加 cmake 模块路径
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_ROOT_DIR}/cmake)
+include(NamespaceTool)
+
+# Set root namespace
+set_root_namespace("aimrt")
+
+# Get namespace
+set_namespace()
+get_namespace(CUR_SUPERIOR_NAMESPACE)
+
+# Set target name
+set(CUR_TARGET_NAME ${PROJECT_NAME})
+set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${PROJECT_NAME})
+
+message(STATUS "Building example: ${CUR_TARGET_NAME}")
+message(STATUS "Target alias: ${CUR_TARGET_ALIAS_NAME}")
+
+# Set file collection
+file(GLOB_RECURSE src ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
+
+# Set link directories
+link_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+# Add target
+add_executable(${CUR_TARGET_NAME})
+add_executable(${CUR_TARGET_ALIAS_NAME} ALIAS ${CUR_TARGET_NAME})
+
+# Set source file of target
+target_sources(${CUR_TARGET_NAME} PRIVATE ${src})
+
+# Set include path of target
+target_include_directories(
+  ${CUR_TARGET_NAME}
+  PRIVATE 
+    $<BUILD_INTERFACE:${PROJECT_ROOT_DIR}/src>)
+
+# Set compile options
+# target_compile_options(${CUR_TARGET_NAME}
+#   PRIVATE
+#     -fPIC)
+
+# Set link libraries of target
+target_link_libraries(${CUR_TARGET_NAME} 
+  PRIVATE 
+    pthread
+    aimrt_main)

@@ -1,0 +1,129 @@
+# Copyright (c) 2023, AgiBot Inc.
+# All rights reserved.
+
+set_namespace()
+
+# Get namespace and target names
+string(REGEX REPLACE ".*/\(.*\)" "\\1" CUR_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+get_namespace(CUR_SUPERIOR_NAMESPACE)
+set(CUR_TARGET_NAME ${CUR_SUPERIOR_NAMESPACE_UNDERLINE}_${CUR_DIR})
+set(CUR_TARGET_ALIAS_NAME ${CUR_SUPERIOR_NAMESPACE}::${CUR_DIR})
+
+# Core options
+option(AIMRT_ENABLE_PLUGINS "Enable plugin support" ON)
+
+# Module options
+foreach(_module IN ITEMS EXECUTOR CHANNEL RPC)
+    cmake_dependent_option(AIMRT_BUILD_${_module} "Build ${_module} module" ON
+                        "AIMRT_ENABLE_PLUGINS" OFF)
+endforeach()
+
+# Core library
+add_library(aimrt_core SHARED
+    aimrt_core.cc
+    manager/manager_base.h
+    manager/manager_factory.h
+)
+
+target_compile_features(aimrt_core PUBLIC cxx_std_17)
+target_compile_definitions(aimrt_core 
+    PRIVATE AIMRT_CORE_EXPORTS
+    PUBLIC $<$<BOOL:${AIMRT_ENABLE_PLUGINS}>:AIMRT_HAS_PLUGINS>
+)
+target_link_libraries(aimrt_core PUBLIC yaml-cpp)
+
+# Plugin modules
+if(AIMRT_ENABLE_PLUGINS)
+    foreach(_module IN ITEMS executor channel rpc)
+        if(AIMRT_BUILD_${_module})
+            add_library(aimrt_${_module} MODULE
+                ${_module}/${_module}_manager.cc
+            )
+            target_link_libraries(aimrt_${_module} PRIVATE aimrt_core)
+            set_target_properties(aimrt_${_module} PROPERTIES
+                PREFIX ""
+                LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/plugins"
+            )
+        endif()
+    endforeach()
+endif()
+
+# Installation rules
+install(TARGETS aimrt_core
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+if(AIMRT_ENABLE_PLUGINS)
+    install(DIRECTORY "${CMAKE_BINARY_DIR}/plugins/"
+        DESTINATION lib/aimrt/plugins
+        FILES_MATCHING PATTERN "*.so"
+    )
+endif()
+
+# File collections
+file(GLOB_RECURSE head_files 
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.h
+)
+
+file(GLOB_RECURSE src_files 
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*.cc
+)
+
+file(GLOB_RECURSE test_files 
+    ${CMAKE_CURRENT_SOURCE_DIR}/*_test.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/allocator/*_test.cc
+)
+
+list(REMOVE_ITEM src_files ${test_files})
+
+# Main target configuration
+add_library(${CUR_TARGET_NAME} SHARED)
+add_library(${CUR_TARGET_ALIAS_NAME} ALIAS ${CUR_TARGET_NAME})
+
+target_sources(${CUR_TARGET_NAME} 
+    PRIVATE ${src_files}
+    INTERFACE FILE_SET HEADERS BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} FILES ${head_files}
+)
+
+target_include_directories(${CUR_TARGET_NAME}
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
+        $<INSTALL_INTERFACE:include/aimrt>
+)
+
+target_link_libraries(${CUR_TARGET_NAME}
+    PUBLIC 
+        ${CMAKE_DL_LIBS}
+        asio::asio
+        yaml-cpp::yaml-cpp
+        TBB::tbb
+        aimrt::interface::aimrt_module_cpp_interface
+        aimrt::common::util
+)
+
+# Additional configurations
+include(AddWerror)
+add_werror(${CUR_TARGET_NAME})
+target_compile_definitions(${CUR_TARGET_NAME} PUBLIC AIMRT_VERSION="${AIMRT_VERSION}")
+
+# Installation
+if(AIMRT_INSTALL)
+    set_property(TARGET ${CUR_TARGET_NAME} PROPERTY EXPORT_NAME ${CUR_TARGET_ALIAS_NAME})
+    install(
+        TARGETS ${CUR_TARGET_NAME}
+        EXPORT ${INSTALL_CONFIG_NAME}
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        FILE_SET HEADERS
+        DESTINATION include/aimrt/${CUR_DIR}
+    )
+endif()
+
+# Tests
+if(AIMRT_BUILD_TESTS AND test_files)
+    add_gtest_target(TEST_TARGET ${CUR_TARGET_NAME} TEST_SRC ${test_files})
+endif()

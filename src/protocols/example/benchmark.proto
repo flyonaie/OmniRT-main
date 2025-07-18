@@ -1,0 +1,29 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+syntax = "proto3";
+
+package aimrt.protocols.example;
+
+enum BenchmarkStatus {
+  Begin = 0;//开始
+  End = 1;//结束
+  WarmUp = 2;//预热
+}
+
+message BenchmarkSignal {
+  BenchmarkStatus status = 1;//状态
+
+  uint32 bench_plan_id = 2;//测试计划ID
+
+  uint32 topic_number = 3;//主题数量
+  uint32 send_num = 4;//发送数量
+  uint32 message_size = 5;//消息大小
+  uint32 send_frequency = 6;//发送频率
+}
+
+message BenchmarkMessage {
+  uint32 seq = 1;//序号
+  uint64 timestamp = 2;//时间戳
+  bytes data = 3;//数据
+}

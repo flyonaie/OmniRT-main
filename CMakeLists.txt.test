@@ -1,0 +1,117 @@
+# Copyright (c) 2023, AgiBot Inc.
+# All rights reserved.
+
+cmake_minimum_required(VERSION 3.24)
+
+project(aimrt LANGUAGES C CXX)
+
+# Set cmake path
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# Some necessary settings
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(INSTALL_CONFIG_NAME ${PROJECT_NAME}-config)
+
+# Master project configuration
+if(NOT DEFINED AIMRT_MASTER_PROJECT)
+  set(AIMRT_MASTER_PROJECT OFF)
+  if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(AIMRT_MASTER_PROJECT ON)
+  endif()
+endif()
+
+message("AIMRT_MASTER_PROJECT = ${AIMRT_MASTER_PROJECT}")
+if(AIMRT_MASTER_PROJECT)
+  # 设置输出目录
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+  message(STATUS "CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
+  # 在项目定义之前设置FetchContent的全局配置
+  set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/_deps" CACHE PATH "Dependencies sources directory")
+  set(THIRD_PARTY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/out" CACHE PATH "Dependencies deps directory")
+
+  set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+  set(CMAKE_CXX_VISIBLITY_INLINES_HIDDEN ON)
+  set(BUILD_SHARED_LIBS ON)
+
+  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(AIMRT_BUILD_TESTS)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+    endif()
+  endif()
+
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+endif()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  add_compile_options(/utf-8 /wd4819)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:__cplusplus")
+endif()
+
+if(WIN32)
+  add_compile_definitions(NOMINMAX)
+endif()
+
+set(CMAKE_PREFIX_PATH "${CMAKE_CURRENT_SOURCE_DIR}/install/lib/cmake")
+
+# Include cmake module
+include(NamespaceTool)
+
+include(GetYamlCpp)
+include(GetGFlags)
+# include(GetGTest)
+# include(GetStdexec)
+# include(GetLibUnifex)
+# include(CheckPythonPackage)
+# include(GetProtobuf)
+# include(ProtobufGenCode)
+# include(GetJsonCpp)
+# include(GetAsio)
+# include(GetGFlags)
+# include(GetYamlCpp)
+# include(GetTBB)
+# include(GetPybind11)
+# include(CheckPythonPackage)
+# include(GetBoost)
+# include(GetSqlite)
+# include(GetCppToml)
+# include(GetIceoryx)
+# include(GetPahoMqttC)
+# include(GetZenoh)
+# include(GetProtobuf)
+# include(GetNlohmannJson)
+# include(GetOpenTelemetryProto)
+# include(GetOpenTelemetryCpp)
+# include(GetBoost)
+# include(GetNghttp2)
+
+# add_subdirectory(examples)
+
+message(STATUS "enable aimrt ...${AIMRT_BUILD_CLI_TOOLS}")
+
+
+
+option(AIMRT_INSTALL "AimRT build tests." ON)
+if(AIMRT_INSTALL)
+# 设置安装路径
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install)
+message(STATUS "111CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}")
+  
+# Install
+  install(
+    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+    DESTINATION ./
+    FILES_MATCHING
+    PATTERN "*.cmake")
+
+  # install(EXPORT ${INSTALL_CONFIG_NAME} DESTINATION lib/cmake/${PROJECT_NAME})
+endif()
+

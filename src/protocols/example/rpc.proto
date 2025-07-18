@@ -1,0 +1,65 @@
+// Copyright (c) 2023, AgiBot Inc.
+// All rights reserved.
+
+syntax = "proto3";
+
+// 导入通用消息定义
+import "common.proto";
+
+// 定义示例服务的包名
+package aimrt.protocols.example;
+
+/**
+ * @brief 获取Foo数据的请求消息
+ * @details 用于请求获取Foo类型的数据
+ */
+message GetFooDataReq {
+  // 请求的消息内容
+  string msg = 1;
+}
+
+/**
+ * @brief 获取Foo数据的响应消息
+ * @details 包含了请求的处理结果和返回的Foo数据
+ */
+message GetFooDataRsp {
+  // 响应状态码，0表示成功，非0表示失败
+  uint64 code = 1;
+  // 响应的消息内容，可以包含错误描述
+  string msg = 2;
+  // 返回的Foo类型数据
+  aimrt.protocols.example.ExampleFoo data = 3;
+}
+
+/**
+ * @brief 获取Bar数据的请求消息
+ * @details 用于请求获取Bar类型的数据，同时可以携带Bar类型的参数
+ */
+message GetBarDataReq {
+  // 请求的消息内容
+  string msg = 1;
+  // 请求携带的Bar类型数据
+  aimrt.protocols.example.ExampleBar data = 2;
+}
+
+/**
+ * @brief 获取Bar数据的响应消息
+ * @details 包含了请求的处理结果
+ */
+message GetBarDataRsp {
+  // 响应状态码，0表示成功，非0表示失败
+  uint64 code = 1;
+  // 响应的消息内容，可以包含错误描述
+  string msg = 2;
+}
+
+/**
+ * @brief 示例服务接口定义
+ * @details 提供了获取Foo和Bar数据的RPC服务接口
+ */
+service ExampleService {
+  // 获取Foo数据的RPC方法,返回Foo类型的数据
+  rpc GetFooData(GetFooDataReq) returns (GetFooDataRsp);
+  // 获取Bar数据的RPC方法,返回Bar类型的数据
+  rpc GetBarData(GetBarDataReq) returns (GetBarDataRsp);
+}

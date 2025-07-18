@@ -1,0 +1,82 @@
+#pragma once
+
+#include <functional>
+#include <map>
+#include <string>
+#include <any>
+#include <memory>
+#include "aimrt_module_protobuf_interface/util/protobuf_tools.h"
+
+namespace aimrt::examples::cpp::pb_rpc::normal_rpc_sync_server_module {
+
+class FunctionRegistry {
+public:
+    static FunctionRegistry& instance() {
+        static FunctionRegistry registry;
+        return registry;
+    }
+
+    template<typename Func>
+    void registerFunction(const std::string& name, Func&& func) {
+        functions_[name] = std::forward<Func>(func);
+    }
+
+    template<typename... Args>
+    auto call(const std::string& name, Args&&... args) {
+        auto it = functions_.find(name);
+        if (it != functions_.end()) {
+            auto func = std::any_cast<std::function<decltype(std::declval<std::function<void(Args...)>>()(args...))>>(it->second);
+            return func(std::forward<Args>(args)...);
+        }
+        throw std::runtime_error("Function not found: " + name);
+    }
+
+    // 自动生成RPC处理函数
+    aimrt::rpc::Status handleRpcCall(const std::string& funcName,
+                                   aimrt::rpc::ContextRef ctx,
+                                   const google::protobuf::Message& request,
+                                   google::protobuf::Message& response) {
+        try {
+            // 从请求中提取参数
+            std::vector<std::any> args;
+            for (int i = 0; i < request.GetDescriptor()->field_count(); ++i) {
+                const auto* field = request.GetDescriptor()->field(i);
+                if (field->cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_INT32) {
+                    args.push_back(request.GetReflection()->GetInt32(request, field));
+                }
+                // 可以添加其他类型的处理...
+            }
+
+            // 调用函数并设置响应
+            auto result = std::apply([this, &funcName](auto&&... params) {
+                return this->call(funcName, std::forward<decltype(params)>(params)...);
+            }, args);
+
+            // 设置响应
+            if (response.GetDescriptor()->field_count() > 0) {
+                const auto* field = response.GetDescriptor()->field(0);
+                if (field->cpp_type() == google::protobuf::FieldDescriptor::CPPTYPE_INT32) {
+                    response.GetReflection()->SetInt32(&response, field, result);
+                }
+            }
+
+            return aimrt::rpc::Status::OK();
+        } catch (const std::exception& e) {
+            AIMRT_ERROR("RPC call failed: {}", e.what());
+            return aimrt::rpc::Status::INTERNAL();
+        }
+    }
+
+private:
+    std::map<std::string, std::any> functions_;
+    FunctionRegistry() = default;
+};
+
+// 用于自动注册的宏
+#define REGISTER_FUNCTION(func) \
+    static auto register_##func = []() { \
+        FunctionRegistry::instance().registerFunction(#func, func); \
+        return true; \
+    }();
+
+}
