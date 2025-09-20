@@ -13,7 +13,7 @@ cmake_install.cmake
 compile_commands.json
 .vscode/
 .idea/
-# _deps/
+_deps/
 build_*/
 release_*/
 install_*/
